@@ -1,74 +1,134 @@
-# Plan d'implémentation : Génération d'Audios de Discussion Complets avec Alternance de Voix
+# Plan d'implémentation : Agent Vocal Virtuel Conversations Réelles (Client Mécontent) via LiveKit
 
-Ce plan décrit les modifications à apporter aux adaptateurs de modèles et le nouveau script à créer pour générer l'intégralité du dialogue bancaire (21 répliques) sous forme d'un seul fichier audio par modèle, avec des voix distinctes pour l'**Agent** (conseillère bancaire, voix généralement féminine/professionnelle) et le **Client** (client mécontent, voix généralement masculine/insistante).
-
----
-
-## 1. Modifications Proposées sur les Adaptateurs de Modèles
-
-Afin de permettre au script de discussion de modifier dynamiquement la voix ou le style (vitesse, accent) de chaque modèle entre chaque réplique sans recréer l'instance, nous allons effectuer de légers ajustements non-intrusifs :
-
-### A. Kokoro v1.0
-* **Fichier** : [kokoro_model.py](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/models/kokoro_model.py)
-* **Changements** :
-  * Déclarer `self.voice = "ff_siwis"` et `self.speed = 1.0` dans le constructeur `__init__`.
-  * Utiliser ces attributs d'instance dynamiques dans l'appel du pipeline.
-  * *Stratégie d'alternance* : N'ayant qu'une seule voix française (`ff_siwis`), nous différencierons l'Agent et le Client par la vitesse (`speed=1.05` pour l'Agent, `speed=0.9` pour le Client).
-
-### B. MeloTTS
-* **Fichier** : [melo_model.py](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/models/melo_model.py)
-* **Changements** :
-  * Déclarer `self.speed = 1.0` dans le constructeur `__init__`.
-  * Passer l'argument `speed` à `self._tts.tts_to_file`.
-  * *Stratégie d'alternance* : Vitesse normale (`speed=1.0`) pour l'Agent et vitesse ralentie/insistante (`speed=0.9`) pour le Client.
-
-### C. Google Translate TTS (gTTS)
-* **Fichier** : [gtts_model.py](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/models/gtts_model.py)
-* **Changements** :
-  * Ajouter `self.tld = "fr"` dans le constructeur.
-  * Passer `tld` à l'instanciation de `gTTS(text, lang=self.lang, tld=self.tld)`.
-  * *Stratégie d'alternance* : Accent de France (`tld="fr"`) pour l'Agent, et accent Canadien-Français (`tld="ca"`) pour le Client.
-
-### D. ElevenLabs REST
-* **Fichier** : [elevenlabs_model.py](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/models/elevenlabs_model.py)
-* **Changements** :
-  * Stocker la liste de toutes les voix retournées par l'API dans `self.available_voices = []` lors de l'appel à `setup()`.
-  * Cela permettra au script de discussion de sélectionner deux voix différentes configurées sur votre compte.
+Ce plan décrit les étapes pour concevoir et déployer un assistant virtuel vocal interactif en temps réel utilisant **LiveKit Agents**. Cet assistant simulera un **client de banque mécontent et frustré**, permettant aux conseillers de s'entraîner à la gestion des conflits.
 
 ---
 
-## 2. Nouveau Script de Génération de Discussion
+## 🛠️ Architecture du Pipeline
 
-Nous allons créer un nouveau script principal :
-* **Fichier** : `generate_discussion.py`
-* **Fonctionnalités** :
-  1. Charger les 21 répliques de [dialogue.py](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/dialogue.py).
-  2. Charger et initialiser chaque modèle configuré.
-  3. Maper les rôles aux voix selon les règles suivantes :
+L'agent fonctionnera sous forme d'un flux WebRTC bidirectionnel temps réel orchestré par le framework `livekit-agents` :
 
-| Modèle TTS | Voix / Style Agent | Voix / Style Client |
-| :--- | :--- | :--- |
-| **kokoro** | `ff_siwis` (vitesse 1.05) | `ff_siwis` (vitesse 0.90) |
-| **melo** | `FR` (vitesse 1.0) | `FR` (vitesse 0.90) |
-| **edgetts** | `fr-FR-DeniseNeural` (féminin) | `fr-FR-HenriNeural` (masculin) |
-| **gtts** | `lang="fr"`, `tld="fr"` (France) | `lang="fr"`, `tld="ca"` (Canada) |
-| **f5tts** | Clonage voix féminine (référence Kokoro) | Clonage voix masculine (générée par Edge-TTS) |
-| **openai** | `nova` (féminin) | `onyx` (masculin) |
-| **mistral** | `fr_marie_neutral` (neutre) | `fr_marie_angry` (fâchée) |
-| **elevenlabs** | Première voix française trouvée | Deuxième voix française trouvée |
+```mermaid
+graph LR
+    User[Conseiller Bancaire] -- WebRTC Audio --> Room((LiveKit Room))
+    Room -- Audio Stream --> VAD[VAD : Détection de Parole]
+    VAD -- Audio Chunk --> STT[STT : ElevenLabs Scribe v2]
+    STT -- Transcription --> LLM[LLM : Gemini 1.5 Flash]
+    LLM -- Prompt: Client Fâché --> TTS[TTS : ElevenLabs - Voix Adam]
+    TTS -- Synthesized Audio Stream --> Room
+    Room -- WebRTC Audio --> User
+```
 
-  4. Pour chaque ligne de dialogue, appliquer la voix associée au rôle de la ligne et synthétiser l'audio individuel temporaire.
-  5. Charger tous les audios générés d'une discussion et les concaténer avec un **silence de pause de 0,8 seconde** entre chaque réplique.
-  6. Sauvegarder l'audio final fusionné dans le dossier `outputs/discussions/discussion_<model>.wav`.
-  7. Nettoyer les fichiers temporaires de répliques individuelles.
+Les technologies retenues sont issues des meilleures performances de nos benchmarks :
+1. **STT (Reconnaissance vocale)** : **ElevenLabs Scribe v2** (meilleur WER du benchmark : 3.12%).
+2. **LLM (Intelligence conversationnelle)** : **Google Gemini 1.5 Flash** (via votre clé API fournie).
+3. **TTS (Synthèse vocale)** : **ElevenLabs** avec la voix **`Adam`** (voix masculine ferme/gronchonne).
 
 ---
 
-## 3. Plan de Vérification
+## 📋 Modifications Proposées
 
-### Validation Locale
-* Lancer la génération de la discussion complète pour les modèles CPU légers (`kokoro`, `gtts`, `edgetts`) :
+### 1. Variables d'Environnement
+#### [MODIFY] [`.env`](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/.env)
+Ajouter la clé API Gemini de l'utilisateur :
+```env
+GEMINI_API_KEY=AQ.Ab8RN6KFrkw42nH-Ie5j5B7dtd2u__pFuoiDWDJJ_RM1ATQTVQ
+```
+
+### 2. Dépendances du Projet
+#### [MODIFY] [`requirements.txt`](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/requirements.txt)
+Ajouter les dépendances de LiveKit et ses plugins :
+```txt
+livekit-agents>=1.5.0
+livekit-plugins-google>=1.5.0
+livekit-plugins-elevenlabs>=1.5.0
+```
+
+### 3. Création de l'Agent Vocal
+#### [NEW] [`agent.py`](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/agent.py)
+Création du script principal de l'agent. Il utilisera `VoicePipelineAgent` pour orchestrer le dialogue. 
+
+**Structure générale proposée pour `agent.py` :**
+```python
+import logging
+from dotenv import load_dotenv
+from livekit.agents import JobContext, WorkerOptions, cli, llm
+from livekit.agents.voice_agent import VoicePipelineAgent
+from livekit.plugins import google, elevenlabs
+
+load_dotenv()
+logger = logging.getLogger("bank-agent")
+
+# Prompt de personnalité pour le client mécontent
+SYSTEM_INSTRUCTIONS = """
+Tu es M. Orens, un client de la banque Atlas Bank. Tu es extrêmement irrité, frustré et pressé. 
+Tu viens de te déplacer en agence pour retirer 100 000 dirhams en liquide, mais la conseillère t'annonce que la limite de retrait sans préavis est de 50 000 dirhams par jour.
+Consignes de rôle :
+- Tu refuses d'abord les excuses de la conseillère.
+- Tu trouves ridicule et inacceptable que tu ne puisses pas retirer ton propre argent.
+- Tu es insistant et exigeant, tu hausses légèrement le ton verbalement.
+- Tu expliques seulement si on te le demande gentiment que tu as besoin de cet argent aujourd'hui pour acheter une maison (le vendeur attend le liquide immédiatement).
+- Tu ne te laisses convaincre par la solution du virement bancaire rapide que si la conseillère est très patiente, polie et te rassure sur le fait que le vendeur aura l'argent aujourd'hui avant midi.
+- Réponds avec des phrases courtes, spontanées et naturelles, comme quelqu'un de fâché à l'oral. Ne fais jamais de longs paragraphes.
+"""
+
+async def entrypoint(ctx: JobContext):
+    # Initialisation des briques STT, LLM et TTS
+    stt_plugin = elevenlabs.STT(language="fr")
+    
+    llm_plugin = google.LLM(
+        model="gemini-1.5-flash",
+        api_key=ctx.room.api_key, # Ou lu du fichier .env
+    )
+    
+    # Voix Adam pour le client mécontent
+    tts_plugin = elevenlabs.TTS(
+        voice_id="pNInz6obpgDQGcFmaJgB", # ID de la voix Adam
+    )
+
+    # Création du pipeline conversationnel avec gestion des interruptions
+    agent = VoicePipelineAgent(
+        vad=ctx.vad,
+        stt=stt_plugin,
+        llm=llm_plugin,
+        tts=tts_plugin,
+        chat_ctx=llm.ChatContext().append(
+            role="system",
+            text=SYSTEM_INSTRUCTIONS,
+        ),
+    )
+
+    await ctx.connect()
+    agent.start(ctx.room)
+    
+    # Salutation initiale de l'agent
+    await agent.say("Bonjour. Je suis venu pour retirer cent mille dirhams de mon compte, maintenant.", allow_interruptions=False)
+
+if __name__ == "__main__":
+    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
+```
+
+---
+
+## 🚀 Plan de Vérification
+
+### 1. Lancement du Serveur de Développement LiveKit
+Pour tester en local, nous pouvons exécuter un serveur LiveKit de développement.
+* Télécharger le CLI LiveKit et démarrer le serveur :
   ```powershell
-  .venv\Scripts\python generate_discussion.py --models kokoro gtts edgetts
+  livekit-server --dev
   ```
-* Vérifier la création des fichiers audio fusionnés dans `outputs/discussions/` et valider à l'écoute l'alternance de voix / styles entre l'Agent et le Client.
+  *(Le mode `--dev` ne requiert aucune clé et crée un serveur local ouvert sur `ws://localhost:7880`)*.
+
+### 2. Démarrage de l'Agent Vocal
+Une fois le serveur démarré, lancer l'agent en mode développement :
+```powershell
+.venv\Scripts\python agent.py dev
+```
+*(L'agent va se connecter au serveur LiveKit local et attendre qu'un utilisateur rejoigne le salon)*.
+
+### 3. Test Audio Interactif (Playground Web)
+* Ouvrir le bac à sable de test de LiveKit (Playground) dans votre navigateur : [https://agents-playground.livekit.io/](https://agents-playground.livekit.io/)
+* Entrer l'URL du serveur local : `ws://localhost:7880`
+* Générer un token temporaire pour rejoindre le salon.
+* Parler dans votre micro (en jouant la conseillère) et interagir directement avec M. Orens (le client virtuel fâché) pour tester ses réactions et la qualité audio en temps réel.
