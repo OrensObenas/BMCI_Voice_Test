@@ -33,7 +33,7 @@ from livekit.agents import (
     APIConnectOptions,
     DEFAULT_API_CONNECT_OPTIONS
 )
-from livekit.agents.utils import AudioBuffer
+from livekit.agents.utils import AudioBuffer, shortuuid
 from livekit.plugins import google
 from faster_whisper import WhisperModel
 from kokoro import KPipeline
@@ -181,7 +181,7 @@ class KokoroChunkedStream(tts.ChunkedStream):
 
     async def _run(self, output_emitter: tts.AudioEmitter) -> None:
         output_emitter.initialize(
-            request_id=tts.shortuuid(),
+            request_id=shortuuid(),
             sample_rate=24000,
             num_channels=1,
             mime_type="audio/pcm",
