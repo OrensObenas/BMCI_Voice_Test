@@ -38,3 +38,11 @@ requests>=2.31
 # ── Utilitaires ──────────────────────────────────────────────
 tqdm>=4.65
 rich>=13.0                 # Affichage console enrichi
+
+# ── LiveKit Voice Agent ──────────────────────────────────────
+livekit-agents>=1.5.0
+livekit-plugins-google>=1.5.0
+livekit-plugins-elevenlabs>=1.5.0
+livekit-plugins-silero>=1.5.0
+
+
