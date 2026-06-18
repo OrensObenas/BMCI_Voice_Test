@@ -1,0 +1,10 @@
+.env
+outputs/
+results/
+__pycache__/
+*.pyc
+.venv/
+venv/
+espeak-ng.msi
+espeak-ng-extracted/
+*.wav

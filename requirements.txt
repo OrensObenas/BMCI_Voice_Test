@@ -1,0 +1,40 @@
+# ══════════════════════════════════════════════════════════════
+# TTS Benchmark — Dépendances Python
+# ══════════════════════════════════════════════════════════════
+
+# ── Core ──────────────────────────────────────────────────────
+torch>=2.0
+torchaudio>=2.0
+soundfile>=0.12
+librosa>=0.10
+numpy<2.0
+python-dotenv>=1.0
+
+# ── ASR pour calcul WER ──────────────────────────────────────
+faster-whisper>=1.0        # Plus rapide que openai-whisper, tourne sur CPU
+jiwer>=3.0                 # Calcul WER / CER
+
+# ── MOS automatique ─────────────────────────────────────────
+# UTMOS via torch.hub (pas de pip nécessaire)
+
+# ── Reporting ────────────────────────────────────────────────
+matplotlib>=3.7
+pandas>=2.0
+tabulate>=0.9
+
+# ── TTS : Tier 1 (CPU) ──────────────────────────────────────
+kokoro>=0.9.4              # Kokoro v1.0
+melotts @ git+https://github.com/myshell-ai/MeloTTS.git  # MeloTTS (French)
+
+# ── TTS : Tier 2 (CPU lent) ─────────────────────────────────
+TTS>=0.22                  # Coqui XTTSv2
+f5-tts>=1.1.0              # F5-TTS voice cloning
+
+
+# ── TTS : API ────────────────────────────────────────────────
+elevenlabs>=1.0            # ElevenLabs API
+requests>=2.31
+
+# ── Utilitaires ──────────────────────────────────────────────
+tqdm>=4.65
+rich>=13.0                 # Affichage console enrichi
