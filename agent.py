@@ -2,6 +2,12 @@ import os
 import logging
 import asyncio
 import numpy as np
+import io
+import wave
+import requests
+import json
+import base64
+import soundfile as sf
 from dotenv import load_dotenv
 
 # Charger les variables d'environnement du fichier .env
@@ -10,11 +16,6 @@ load_dotenv()
 # S'assurer que GOOGLE_API_KEY et GEMINI_API_KEY sont synchronisés pour le SDK Google
 if "GEMINI_API_KEY" in os.environ and "GOOGLE_API_KEY" not in os.environ:
     os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
-
-# eSpeak NG requis par Kokoro pour le phonemizer
-ESPEAK_NG_DIR = r"C:\Program Files\eSpeak NG"
-if os.path.isdir(ESPEAK_NG_DIR) and ESPEAK_NG_DIR not in os.environ.get("PATH", ""):
-    os.environ["PATH"] = ESPEAK_NG_DIR + ";" + os.environ.get("PATH", "")
 
 from livekit import rtc
 from livekit.agents import (
@@ -35,8 +36,6 @@ from livekit.agents import (
 )
 from livekit.agents.utils import AudioBuffer, shortuuid
 from livekit.plugins import google
-from faster_whisper import WhisperModel
-from kokoro import KPipeline
 
 logger = logging.getLogger("bank-agent")
 
@@ -53,38 +52,35 @@ Consignes de rôle pour la simulation :
 - Réponds avec des phrases courtes, directes et naturelles (langage parlé de tous les jours). Ne fais pas de longues phrases littéraires ou de listes à puces. Sois réactif et coupé dans ton élan si l'agent t'interrompt.
 """
 
-class LocalWhisperSTT(stt.STT):
-    """Adaptateur STT pour Whisper en local via faster-whisper."""
-    def __init__(self, model_size: str = "large-v3-turbo", device: str = "cpu", compute_type: str = "int8"):
+def pcm_to_wav(pcm_data: bytes, sample_rate: int, num_channels: int) -> bytes:
+    """Encapsule les données PCM brutes dans un fichier WAV en mémoire."""
+    wav_buf = io.BytesIO()
+    with wave.open(wav_buf, "wb") as wav_file:
+        wav_file.setnchannels(num_channels)
+        wav_file.setsampwidth(2)  # 16-bit PCM = 2 octets
+        wav_file.setframerate(sample_rate)
+        wav_file.writeframes(pcm_data)
+    return wav_buf.getvalue()
+
+
+class CohereSTT(stt.STT):
+    """Adaptateur STT pour l'API Cohere (Transcribe v2)."""
+    def __init__(self, api_key: str = ""):
         super().__init__(
             capabilities=stt.STTCapabilities(
                 streaming=False,
                 interim_results=False,
             )
         )
-        self._model_size = model_size
-        self._device = device
-        self._compute_type = compute_type
-        self._model = None
+        self._api_key = api_key or os.getenv("COHERE_API_KEY", "")
 
     @property
     def model(self) -> str:
-        return f"whisper-local-{self._model_size}"
+        return "cohere-transcribe-03-2026"
 
     @property
     def provider(self) -> str:
-        return "faster-whisper"
-
-    def _get_model(self):
-        if self._model is None:
-            logger.info(f"Chargement de Whisper local ({self._model_size}) sur {self._device} ({self._compute_type})...")
-            self._model = WhisperModel(
-                self._model_size,
-                device=self._device,
-                compute_type=self._compute_type
-            )
-            logger.info("Modèle Whisper local chargé.")
-        return self._model
+        return "cohere"
 
     async def _recognize_impl(
         self,
@@ -96,33 +92,35 @@ class LocalWhisperSTT(stt.STT):
         # Combiner les trames d'entrée
         merged_frame = rtc.combine_audio_frames(buffer)
         
-        # Rééchantillonner en 16000Hz si nécessaire (Whisper attend du 16kHz)
-        if merged_frame.sample_rate != 16000:
-            resampler = rtc.AudioResampler(
-                input_rate=merged_frame.sample_rate,
-                output_rate=16000,
-                num_channels=1,
-            )
-            resampled_frames = resampler.push(merged_frame)
-            resampled_frames.extend(resampler.flush())
-            merged_frame = rtc.combine_audio_frames(resampled_frames)
-
-        # Convertir PCM 16 bits en float32 normalisé [-1.0, 1.0]
-        audio_data = np.frombuffer(merged_frame.data, dtype=np.int16)
-        audio_float32 = audio_data.astype(np.float32) / 32768.0
+        # Convertir l'audio en WAV PCM 16 bits en mémoire
+        wav_data = pcm_to_wav(
+            pcm_data=merged_frame.data.tobytes(),
+            sample_rate=merged_frame.sample_rate,
+            num_channels=merged_frame.num_channels
+        )
 
         loop = asyncio.get_running_loop()
         def _transcribe():
-            model = self._get_model()
-            segments, _info = model.transcribe(
-                audio_float32,
-                language="fr",
-                beam_size=5,
-                vad_filter=True
-            )
-            return " ".join(seg.text.strip() for seg in segments)
+            url = "https://api.cohere.com/v2/audio/transcriptions"
+            headers = {
+                "Authorization": f"Bearer {self._api_key}"
+            }
+            files = {
+                "file": ("audio.wav", io.BytesIO(wav_data), "audio/wav")
+            }
+            data = {
+                "model": "cohere-transcribe-03-2026",
+                "language": "fr"
+            }
+            resp = requests.post(url, headers=headers, files=files, data=data, timeout=30)
+            resp.raise_for_status()
+            return resp.json().get("text", "")
 
-        text = await loop.run_in_executor(None, _transcribe)
+        try:
+            text = await loop.run_in_executor(None, _transcribe)
+        except Exception as e:
+            logger.error(f"Erreur pendant la transcription Cohere : {e}")
+            text = ""
         
         return stt.SpeechEvent(
             type=stt.SpeechEventType.FINAL_TRANSCRIPT,
@@ -135,49 +133,40 @@ class LocalWhisperSTT(stt.STT):
         )
 
 
-class LocalKokoroTTS(tts.TTS):
-    """Adaptateur TTS pour Kokoro en local."""
-    def __init__(self, voice: str = "ff_siwis", speed: float = 1.0):
+class MistralTTS(tts.TTS):
+    """Adaptateur TTS pour l'API Mistral AI Voxtral."""
+    def __init__(self, voice: str = "fr_marie_angry", api_key: str = ""):
         super().__init__(
             capabilities=tts.TTSCapabilities(streaming=False),
             sample_rate=48000,
             num_channels=1,
         )
         self._voice = voice
-        self._speed = speed
-        self._pipeline = None
+        self._api_key = api_key or os.getenv("MISTRAL_API_KEY", "")
 
     @property
     def model(self) -> str:
-        return "kokoro-v0.19"
+        return "voxtral-mini-tts-2603"
 
     @property
     def provider(self) -> str:
-        return "kokoro"
-
-    def _get_pipeline(self):
-        if self._pipeline is None:
-            logger.info("Initialisation du pipeline Kokoro (lang=f)...")
-            self._pipeline = KPipeline(lang_code="f")
-            logger.info("Pipeline Kokoro initialisé.")
-        return self._pipeline
+        return "mistral"
 
     def synthesize(
         self, text: str, *, conn_options: APIConnectOptions = DEFAULT_API_CONNECT_OPTIONS
     ) -> tts.ChunkedStream:
-        return KokoroChunkedStream(self, text, self._get_pipeline(), self._voice, self._speed)
+        return MistralChunkedStream(self, text, self._voice, self._api_key)
 
 
-class KokoroChunkedStream(tts.ChunkedStream):
-    def __init__(self, tts_instance, text, pipeline, voice, speed):
+class MistralChunkedStream(tts.ChunkedStream):
+    def __init__(self, tts_instance, text, voice, api_key):
         super().__init__(
             tts=tts_instance,
             input_text=text,
             conn_options=DEFAULT_API_CONNECT_OPTIONS,
         )
-        self._pipeline = pipeline
         self._voice = voice
-        self._speed = speed
+        self._api_key = api_key
 
     async def _run(self, output_emitter: tts.AudioEmitter) -> None:
         output_emitter.initialize(
@@ -190,20 +179,34 @@ class KokoroChunkedStream(tts.ChunkedStream):
         
         loop = asyncio.get_running_loop()
         def _generate():
-            chunks = []
-            for _, _, audio_chunk in self._pipeline(self.input_text, voice=self._voice, speed=self._speed):
-                chunks.append(audio_chunk)
-            if not chunks:
-                return b""
-            full_audio = np.concatenate(chunks)
-            pcm_24k = (full_audio * 32767.0).astype(np.int16).tobytes()
+            url = "https://api.mistral.ai/v1/audio/speech"
+            headers = {
+                "Authorization": f"Bearer {self._api_key}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": "voxtral-mini-tts-2603",
+                "input": self.input_text,
+                "voice": self._voice,
+                "response_format": "wav",
+            }
+            resp = requests.post(url, json=payload, headers=headers, timeout=30)
+            resp.raise_for_status()
+
+            response_json = resp.json()
+            audio_data_b64 = response_json.get("audio_data", "")
+            raw_audio = base64.b64decode(audio_data_b64)
             
-            # Rééchantillonner de 24kHz à 48kHz (WebRTC attend du 48kHz standard)
+            # Lire le WAV 24kHz
+            data, sample_rate = sf.read(io.BytesIO(raw_audio), dtype='int16')
+            pcm_24k = data.tobytes()
+            
+            # Rééchantillonner à 48kHz standard pour WebRTC
             frame_24k = rtc.AudioFrame(
                 data=pcm_24k,
                 sample_rate=24000,
                 num_channels=1,
-                samples_per_channel=len(full_audio)
+                samples_per_channel=len(data)
             )
             resampler = rtc.AudioResampler(
                 input_rate=24000,
@@ -215,7 +218,12 @@ class KokoroChunkedStream(tts.ChunkedStream):
             frame_48k = rtc.combine_audio_frames(resampled_frames)
             return frame_48k.data.tobytes()
 
-        pcm_data = await loop.run_in_executor(None, _generate)
+        try:
+            pcm_data = await loop.run_in_executor(None, _generate)
+        except Exception as e:
+            logger.error(f"Erreur pendant la synthèse Mistral : {e}")
+            pcm_data = b""
+
         if pcm_data:
             output_emitter.push(pcm_data)
         output_emitter.flush()
@@ -226,11 +234,11 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect()
     logger.info(f"Connecté avec succès au salon : {ctx.room.name}")
 
-    # Configuration du STT local Whisper
-    logger.info("Configuration du STT Whisper local...")
-    local_stt = LocalWhisperSTT()
+    # Configuration du STT Cohere
+    logger.info("Configuration du STT Cohere API...")
+    cohere_stt = CohereSTT()
     stt_plugin = stt.StreamAdapter(
-        stt=local_stt,
+        stt=cohere_stt,
         vad=inference.VAD()
     )
 
@@ -238,9 +246,9 @@ async def entrypoint(ctx: JobContext):
     logger.info("Configuration du LLM Google Gemini...")
     llm_plugin = google.LLM(model="gemini-2.5-flash")
 
-    # Configuration du TTS local Kokoro
-    logger.info("Configuration du TTS Kokoro local...")
-    tts_plugin = LocalKokoroTTS()
+    # Configuration du TTS Mistral (voix irritée 'fr_marie_angry')
+    logger.info("Configuration du TTS Mistral API...")
+    tts_plugin = MistralTTS(voice="fr_marie_angry")
 
     # Initialisation du module de session d'agent vocal (AgentSession)
     logger.info("Initialisation de l'agent vocal (AgentSession)...")

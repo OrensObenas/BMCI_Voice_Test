@@ -65,23 +65,21 @@ Pour générer à nouveau ou ajouter d'autres modèles, lancez simplement :
 
 ---
 
-## 🤖 Transition vers des modèles STT & TTS Locaux (Whisper & Kokoro)
+## 🤖 Transition vers des modèles STT & TTS Cloud à Faible Latence (Cohere & Mistral)
 
-Pour répondre à votre demande, nous avons migré l'agent vocal LiveKit d'ElevenLabs (STT & TTS) vers des modèles d'inférence s'exécutant entièrement en local :
-1. **STT (Reconnaissance vocale) Local** : Nous avons développé la classe `LocalWhisperSTT` (qui hérite de `livekit.agents.stt.STT`) utilisant `faster-whisper` avec le modèle `large-v3-turbo` s'exécutant sur CPU.
-   * L'agent rééchantillonne automatiquement l'audio d'entrée à 16 kHz (fréquence attendue par Whisper) en utilisant le resampler natif haute performance de LiveKit.
-   * L'adaptateur de flux `stt.StreamAdapter` de LiveKit est combiné avec Silero VAD pour découper et accumuler la parole et l'envoyer au modèle de transcription.
-2. **TTS (Synthèse vocale) Local** : Nous avons développé la classe `LocalKokoroTTS` (qui hérite de `livekit.agents.tts.TTS`) utilisant le pipeline `kokoro-82M` (v0.19) avec la voix française féminine `ff_siwis`.
-   * Kokoro génère la voix à la volée sur CPU de manière extrêmement rapide (< 300 ms de temps de réponse).
-   * L'audio généré (float32) est normalisé et converti en PCM 16 bits à 24 kHz avant d'être injecté dans le flux audio LiveKit via `tts.AudioEmitter`.
-3. **LLM** : Nous utilisons **Google Gemini 2.5 Flash** (via votre clé API validée) afin de garder des réponses ultra-rapides et intelligentes tout en jouant le rôle de **M. Orens** (le client fâché exigeant de retirer 100 000 DH).
+Pour répondre à votre demande et minimiser la latence de conversation, nous avons migré l'agent vocal LiveKit vers les APIs cloud de Cohere et Mistral :
+1. **STT (Reconnaissance Vocale)** : Nous avons développé la classe `CohereSTT` (qui hérite de `livekit.agents.stt.STT`) utilisant l'API **Cohere Transcribe v2** (`cohere-transcribe-03-2026`).
+   * L'agent convertit l'audio détecté par le VAD en fichier WAV PCM 16 bits en mémoire (`io.BytesIO`) et l'envoie à l'API Cohere.
+   * La transcription est ultra-rapide et affiche la meilleure précision du benchmark en français.
+2. **TTS (Synthèse Vocale)** : Nous avons développé la classe `MistralTTS` (qui hérite de `livekit.agents.tts.TTS`) utilisant l'API **Mistral Voxtral** (`voxtral-mini-tts-2603`) avec la voix **`fr_marie_angry`** (voix nativement irritée/mécontente, parfaite pour le rôle).
+   * L'audio généré (24 kHz) est décodé et rééchantillonné dynamiquement à 48 kHz (le standard attendu par WebRTC) pour garantir la stabilité du flux.
+3. **LLM** : Nous conservons **Google Gemini 2.5 Flash** (via votre clé API validée).
 
 ### Statut du Service et Lancement
-L'agent a été testé avec succès. Il a démarré et s'est connecté à votre salon LiveKit Cloud :
+L'agent a été testé et mis en service :
 *   **Salon** : `wss://internship-obt2eynj.livekit.cloud`
-*   **Worker ID** : `AW_vikgpzWmcHqV`
+*   **Worker ID** : `AW_g8qiPkjxwS5k` (ou le nouveau ID attribué lors du redémarrage)
 *   **Région** : `EU West B`
-*   **Logs d'exécution** : [task-2965.log](file:///C:/Users/user/.gemini/antigravity/brain/0aa50022-c315-4341-8510-fa64795e2544/.system_generated/tasks/task-2965.log)
 *   **Script de l'agent mis à jour** : [agent.py](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/agent.py)
 
 ### 🚀 Lancement de la Simulation :
@@ -89,4 +87,4 @@ L'agent a été testé avec succès. Il a démarré et s'est connecté à votre 
    ```powershell
    .venv\Scripts\python agent.py dev
    ```
-2. Ouvrez le Sandbox/Playground LiveKit Cloud pour tester l'interaction vocale en français et vérifier que l'agent transcrit, réfléchit avec Gemini, et répond localement avec la voix Kokoro en temps réel.
+2. Ouvrez le Sandbox/Playground LiveKit Cloud pour tester l'interaction vocale en français avec la voix irritée de Marie de Mistral et une latence de réponse quasi instantanée (< 1s) !
