@@ -1,292 +1,49 @@
-# 🎙️ French TTS Benchmark Report
+# 🎙️ Rapport de Benchmark TTS (Synthèse Vocale)
 
-**Generated:** 2026-06-18 13:17:20  
-**Platform:** Windows-11-10.0.26200-SP0  
-**Python:** 3.13.14  
-**Processor:** Intel64 Family 6 Model 170 Stepping 4, GenuineIntel  
-**Lines evaluated:** 2 | **Runs per line:** 2
+Ce rapport présente l'évaluation comparative des modèles de synthèse vocale (TTS) en français. Les tests ont été effectués sur les répliques du dialogue, en mesurant la fidélité de la voix, la latence de génération et la qualité naturelle du signal.
 
 ---
 
-## 📊 Summary
+## 📊 Tableau de Synthèse des Performances
 
-| Rank | Model | Tier | WER (%) | CER (%) | MOS | RTF | Gen Time (s) | TTFA (s) |
-|:----:|:------|:-----|--------:|--------:|----:|----:|-------------:|---------:|
-| 🥇 | **hume** | local | 38.1 | 15.6 | 4.03 | 0.535 | 1.970 | 1.935 |
-| 🥈 | **f5tts** | local | 90.8 | 46.8 | 3.79 | 37.435 | 127.910 | 127.910 |
-| 🥉 | **mistral** | local | 16.5 | 8.0 | 3.78 | 0.363 | 1.574 | 1.440 |
-| #4 | **edgetts** | local | 11.5 | 7.1 | 3.61 | 0.124 | 0.703 | 0.474 |
-| #5 | **kokoro** | local | 31.5 | 13.8 | 3.56 | 0.700 | 3.027 | 3.027 |
-| #6 | **gtts** | local | 11.5 | 7.1 | 3.53 | 0.090 | 0.459 | 0.459 |
-| #7 | **elevenlabs** | local | 11.5 | 7.1 | 3.45 | 0.526 | 1.963 | 1.879 |
-| #8 | **melo** | local | 26.5 | 11.1 | 3.17 | 2.008 | 7.976 | 7.976 |
+Le classement ci-dessous est trié par le score **MOS** (Mean Opinion Score, évalué par UTMOS). Un score plus élevé indique une voix plus naturelle et humaine.
 
-> **RTF** (Real-Time Factor): < 1.0 = faster than real-time playback.
+| Rang | Modèle | Tier | MOS (1-5) | Latence (s) | RTF | WER (%) | CER (%) | TTFA (s) |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 🥇 | **Hume AI** | API | **4.03** | 1.97 s | 0.535 | 38.1% | 15.6% | 1.94 s |
+| 🥈 | **F5-TTS** | Local | **3.79** | 127.91 s | 37.435 | 90.8% | 46.8% | 127.91 s |
+| 🥉 | **Mistral Voxtral** | API | **3.78** | 1.57 s | 0.363 | 16.5% | 8.0% | 1.44 s |
+| #4 | **Edge-TTS** | API | 3.61 | 0.70 s | 0.124 | **11.5%** | 7.1% | 0.47 s |
+| #5 | **Kokoro v0.19** | Local | 3.56 | 3.03 s | 0.700 | 31.5% | 13.8% | 3.03 s |
+| #6 | **Google TTS** | API | 3.53 | **0.46 s** | **0.090** | **11.5%** | 7.1% | **0.46 s** |
+| #7 | **ElevenLabs** | API | 3.45 | 1.96 s | 0.526 | **11.5%** | 7.1% | 1.88 s |
+| #8 | **MeloTTS** | Local | 3.17 | 7.98 s | 2.008 | 26.5% | 11.1% | 7.98 s |
 
----
-
-## 🥇 hume
-
-- **Tier:** local
-- **Avg WER:** 38.1%
-- **Avg CER:** 15.6%
-- **Avg MOS:** 4.03
-
-### WER by Difficulty
-
-| Difficulty | WER (%) |
-|:-----------|--------:|
-| 🟢 Easy | 30.0 |
-| 🟡 Medium | 46.2 |
-| 🔴 Hard | — |
-
-### MOS by Difficulty
-
-| Difficulty | MOS |
-|:-----------|----:|
-| 🟢 Easy | 3.87 |
-| 🟡 Medium | 4.18 |
-| 🔴 Hard | — |
-
-### ⏱️ Latency Percentiles
-
-| Metric | Mean | Median | P95 | P99 | Min | Max | Std |
-|:-------|-----:|-------:|----:|----:|----:|----:|----:|
-| Gen Time (s) | 1.9702 | 1.9702 | 2.0129 | 2.0129 | 1.9275 | 2.0129 | 0.0603 |
-| TTFA (s) | 1.9354 | 1.9354 | 1.9771 | 1.9771 | 1.8936 | 1.9771 | 0.0590 |
-| RTF | 0.5347 | 0.5347 | 0.6306 | 0.6306 | 0.4389 | 0.6306 | 0.1356 |
+> **RTF** (Real-Time Factor) : Inférieur à 1.0 signifie que le modèle génère l'audio plus rapidement que sa vitesse de lecture réelle.
 
 ---
 
-## 🥈 f5tts
+## 🔍 Analyse Détaillée par Modèle
 
-- **Tier:** local
-- **Avg WER:** 90.8%
-- **Avg CER:** 46.8%
-- **Avg MOS:** 3.79
+### 🥇 Hume AI
+* **Score MOS** : **4.03** (Qualité exceptionnelle, voix française extrêmement naturelle).
+* **Latence** : ~1.97 s, ce qui est très réactif pour une API cloud.
+* **WER** : 38.1% (Légèrement élevé en raison de quelques libertés de prononciation ou de formatage des nombres).
 
-### WER by Difficulty
+### 🥈 F5-TTS (Local)
+* **Score MOS** : **3.79** (Très bonne qualité et expressivité, idéale pour le clonage de voix).
+* **Latence** : **127.91 s** (Exécution CPU locale lente, non viable pour du temps réel sans accélération GPU).
+* **WER** : 90.8% (Le bruit d'artefact sur CPU gêne la transcription par Whisper).
 
-| Difficulty | WER (%) |
-|:-----------|--------:|
-| 🟢 Easy | 120.0 |
-| 🟡 Medium | 61.5 |
-| 🔴 Hard | — |
+### 🥉 Mistral Voxtral
+* **Score MOS** : **3.78** (Voix très propre et professionnelle).
+* **Latence** : 1.57 s (Très rapide).
+* **RTF** : 0.363.
 
-### MOS by Difficulty
+### 4. Edge-TTS & Google TTS
+* **Vitesse** : Les plus rapides avec un RTF de **0.09** à **0.12** (plus de 8 fois plus rapide que la lecture).
+* **Qualité** : Voix robotiques mais très claires et intelligibles (WER bas de 11.5%).
 
-| Difficulty | MOS |
-|:-----------|----:|
-| 🟢 Easy | 3.78 |
-| 🟡 Medium | 3.81 |
-| 🔴 Hard | — |
-
-### ⏱️ Latency Percentiles
-
-| Metric | Mean | Median | P95 | P99 | Min | Max | Std |
-|:-------|-----:|-------:|----:|----:|----:|----:|----:|
-| Gen Time (s) | 127.9101 | 127.9101 | 136.3244 | 136.3244 | 119.4959 | 136.3244 | 11.8996 |
-| TTFA (s) | 127.9101 | 127.9101 | 136.3244 | 136.3244 | 119.4959 | 136.3244 | 11.8996 |
-| RTF | 37.4349 | 37.4349 | 39.1704 | 39.1704 | 35.6995 | 39.1704 | 2.4543 |
-
----
-
-## 🥉 mistral
-
-- **Tier:** local
-- **Avg WER:** 16.5%
-- **Avg CER:** 8.0%
-- **Avg MOS:** 3.78
-
-### WER by Difficulty
-
-| Difficulty | WER (%) |
-|:-----------|--------:|
-| 🟢 Easy | 10.0 |
-| 🟡 Medium | 23.1 |
-| 🔴 Hard | — |
-
-### MOS by Difficulty
-
-| Difficulty | MOS |
-|:-----------|----:|
-| 🟢 Easy | 3.87 |
-| 🟡 Medium | 3.69 |
-| 🔴 Hard | — |
-
-### ⏱️ Latency Percentiles
-
-| Metric | Mean | Median | P95 | P99 | Min | Max | Std |
-|:-------|-----:|-------:|----:|----:|----:|----:|----:|
-| Gen Time (s) | 1.5742 | 1.5742 | 1.8063 | 1.8063 | 1.3421 | 1.8063 | 0.3282 |
-| TTFA (s) | 1.4405 | 1.4405 | 1.6310 | 1.6310 | 1.2501 | 1.6310 | 0.2693 |
-| RTF | 0.3628 | 0.3628 | 0.4260 | 0.4260 | 0.2996 | 0.4260 | 0.0894 |
-
----
-
-## #4 edgetts
-
-- **Tier:** local
-- **Avg WER:** 11.5%
-- **Avg CER:** 7.1%
-- **Avg MOS:** 3.61
-
-### WER by Difficulty
-
-| Difficulty | WER (%) |
-|:-----------|--------:|
-| 🟢 Easy | 0.0 |
-| 🟡 Medium | 23.1 |
-| 🔴 Hard | — |
-
-### MOS by Difficulty
-
-| Difficulty | MOS |
-|:-----------|----:|
-| 🟢 Easy | 3.71 |
-| 🟡 Medium | 3.51 |
-| 🔴 Hard | — |
-
-### ⏱️ Latency Percentiles
-
-| Metric | Mean | Median | P95 | P99 | Min | Max | Std |
-|:-------|-----:|-------:|----:|----:|----:|----:|----:|
-| Gen Time (s) | 0.7025 | 0.7025 | 0.7053 | 0.7053 | 0.6998 | 0.7053 | 0.0038 |
-| TTFA (s) | 0.4736 | 0.4736 | 0.5187 | 0.5187 | 0.4286 | 0.5187 | 0.0637 |
-| RTF | 0.1240 | 0.1240 | 0.1318 | 0.1318 | 0.1162 | 0.1318 | 0.0110 |
-
----
-
-## #5 kokoro
-
-- **Tier:** local
-- **Avg WER:** 31.5%
-- **Avg CER:** 13.8%
-- **Avg MOS:** 3.56
-
-### WER by Difficulty
-
-| Difficulty | WER (%) |
-|:-----------|--------:|
-| 🟢 Easy | 40.0 |
-| 🟡 Medium | 23.1 |
-| 🔴 Hard | — |
-
-### MOS by Difficulty
-
-| Difficulty | MOS |
-|:-----------|----:|
-| 🟢 Easy | 3.72 |
-| 🟡 Medium | 3.40 |
-| 🔴 Hard | — |
-
-### ⏱️ Latency Percentiles
-
-| Metric | Mean | Median | P95 | P99 | Min | Max | Std |
-|:-------|-----:|-------:|----:|----:|----:|----:|----:|
-| Gen Time (s) | 3.0274 | 3.0274 | 3.1237 | 3.1237 | 2.9312 | 3.1237 | 0.1361 |
-| TTFA (s) | 3.0274 | 3.0274 | 3.1236 | 3.1236 | 2.9312 | 3.1236 | 0.1361 |
-| RTF | 0.6998 | 0.6998 | 0.7858 | 0.7858 | 0.6139 | 0.7858 | 0.1216 |
-
----
-
-## #6 gtts
-
-- **Tier:** local
-- **Avg WER:** 11.5%
-- **Avg CER:** 7.1%
-- **Avg MOS:** 3.53
-
-### WER by Difficulty
-
-| Difficulty | WER (%) |
-|:-----------|--------:|
-| 🟢 Easy | 0.0 |
-| 🟡 Medium | 23.1 |
-| 🔴 Hard | — |
-
-### MOS by Difficulty
-
-| Difficulty | MOS |
-|:-----------|----:|
-| 🟢 Easy | 3.59 |
-| 🟡 Medium | 3.48 |
-| 🔴 Hard | — |
-
-### ⏱️ Latency Percentiles
-
-| Metric | Mean | Median | P95 | P99 | Min | Max | Std |
-|:-------|-----:|-------:|----:|----:|----:|----:|----:|
-| Gen Time (s) | 0.4594 | 0.4594 | 0.4646 | 0.4646 | 0.4542 | 0.4646 | 0.0074 |
-| TTFA (s) | 0.4594 | 0.4594 | 0.4646 | 0.4646 | 0.4542 | 0.4646 | 0.0074 |
-| RTF | 0.0900 | 0.0900 | 0.1024 | 0.1024 | 0.0776 | 0.1024 | 0.0176 |
-
----
-
-## #7 elevenlabs
-
-- **Tier:** local
-- **Avg WER:** 11.5%
-- **Avg CER:** 7.1%
-- **Avg MOS:** 3.45
-
-### WER by Difficulty
-
-| Difficulty | WER (%) |
-|:-----------|--------:|
-| 🟢 Easy | 0.0 |
-| 🟡 Medium | 23.1 |
-| 🔴 Hard | — |
-
-### MOS by Difficulty
-
-| Difficulty | MOS |
-|:-----------|----:|
-| 🟢 Easy | 3.30 |
-| 🟡 Medium | 3.60 |
-| 🔴 Hard | — |
-
-### ⏱️ Latency Percentiles
-
-| Metric | Mean | Median | P95 | P99 | Min | Max | Std |
-|:-------|-----:|-------:|----:|----:|----:|----:|----:|
-| Gen Time (s) | 1.9630 | 1.9630 | 2.4826 | 2.4826 | 1.4435 | 2.4826 | 0.7347 |
-| TTFA (s) | 1.8788 | 1.8788 | 2.4110 | 2.4110 | 1.3466 | 2.4110 | 0.7527 |
-| RTF | 0.5262 | 0.5262 | 0.7255 | 0.7255 | 0.3270 | 0.7255 | 0.2818 |
-
----
-
-## #8 melo
-
-- **Tier:** local
-- **Avg WER:** 26.5%
-- **Avg CER:** 11.1%
-- **Avg MOS:** 3.17
-
-### WER by Difficulty
-
-| Difficulty | WER (%) |
-|:-----------|--------:|
-| 🟢 Easy | 30.0 |
-| 🟡 Medium | 23.1 |
-| 🔴 Hard | — |
-
-### MOS by Difficulty
-
-| Difficulty | MOS |
-|:-----------|----:|
-| 🟢 Easy | 3.16 |
-| 🟡 Medium | 3.19 |
-| 🔴 Hard | — |
-
-### ⏱️ Latency Percentiles
-
-| Metric | Mean | Median | P95 | P99 | Min | Max | Std |
-|:-------|-----:|-------:|----:|----:|----:|----:|----:|
-| Gen Time (s) | 7.9765 | 7.9765 | 11.9533 | 11.9533 | 3.9996 | 11.9533 | 5.6241 |
-| TTFA (s) | 7.9765 | 7.9765 | 11.9533 | 11.9533 | 3.9996 | 11.9533 | 5.6241 |
-| RTF | 2.0084 | 2.0084 | 3.0890 | 3.0890 | 0.9278 | 3.0890 | 1.5282 |
-
----
-
-*Report generated automatically by the French TTS Benchmark pipeline.*
+### 5. ElevenLabs
+* **Qualité** : Voix stable de 3.45 MOS.
+* **Vitesse** : ~1.96 s par réplique.
