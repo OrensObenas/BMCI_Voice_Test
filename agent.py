@@ -140,7 +140,7 @@ class LocalKokoroTTS(tts.TTS):
     def __init__(self, voice: str = "ff_siwis", speed: float = 1.0):
         super().__init__(
             capabilities=tts.TTSCapabilities(streaming=False),
-            sample_rate=24000,
+            sample_rate=48000,
             num_channels=1,
         )
         self._voice = voice
@@ -182,7 +182,7 @@ class KokoroChunkedStream(tts.ChunkedStream):
     async def _run(self, output_emitter: tts.AudioEmitter) -> None:
         output_emitter.initialize(
             request_id=shortuuid(),
-            sample_rate=24000,
+            sample_rate=48000,
             num_channels=1,
             mime_type="audio/pcm",
             stream=False,
@@ -196,7 +196,24 @@ class KokoroChunkedStream(tts.ChunkedStream):
             if not chunks:
                 return b""
             full_audio = np.concatenate(chunks)
-            return (full_audio * 32767.0).astype(np.int16).tobytes()
+            pcm_24k = (full_audio * 32767.0).astype(np.int16).tobytes()
+            
+            # Rééchantillonner de 24kHz à 48kHz (WebRTC attend du 48kHz standard)
+            frame_24k = rtc.AudioFrame(
+                data=pcm_24k,
+                sample_rate=24000,
+                num_channels=1,
+                samples_per_channel=len(full_audio)
+            )
+            resampler = rtc.AudioResampler(
+                input_rate=24000,
+                output_rate=48000,
+                num_channels=1
+            )
+            resampled_frames = resampler.push(frame_24k)
+            resampled_frames.extend(resampler.flush())
+            frame_48k = rtc.combine_audio_frames(resampled_frames)
+            return frame_48k.data.tobytes()
 
         pcm_data = await loop.run_in_executor(None, _generate)
         if pcm_data:
