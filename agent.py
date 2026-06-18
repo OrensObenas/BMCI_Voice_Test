@@ -9,8 +9,7 @@ load_dotenv()
 if "GEMINI_API_KEY" in os.environ and "GOOGLE_API_KEY" not in os.environ:
     os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
 
-from livekit.agents import JobContext, WorkerOptions, cli, llm, inference
-from livekit.agents.voice_agent import VoicePipelineAgent
+from livekit.agents import JobContext, WorkerOptions, cli, llm, inference, AgentSession, Agent, TurnHandlingOptions
 from livekit.plugins import google, elevenlabs
 
 logger = logging.getLogger("bank-agent")
@@ -33,13 +32,9 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect()
     logger.info(f"Connecté avec succès au salon : {ctx.room.name}")
 
-    # Initialisation du module VAD (Voice Activity Detection)
-    logger.info("Chargement du modèle VAD...")
-    vad_plugin = inference.VAD.load()
-
     # Configuration du STT (Speech-to-Text) ElevenLabs Scribe v2
     logger.info("Configuration du STT ElevenLabs...")
-    stt_plugin = elevenlabs.STT(language="fr")
+    stt_plugin = elevenlabs.STT()
 
     # Configuration du LLM Google Gemini
     logger.info("Configuration du LLM Google Gemini...")
@@ -52,27 +47,32 @@ async def entrypoint(ctx: JobContext):
         model_id="eleven_multilingual_v2"
     )
 
-    # Définition du contexte initial du chat avec le prompt de personnalité
-    chat_context = llm.ChatContext().append(
-        role="system",
-        text=SYSTEM_INSTRUCTIONS
-    )
-
-    # Création de l'agent vocal interactif
-    logger.info("Initialisation de l'agent vocal (VoicePipelineAgent)...")
-    agent = VoicePipelineAgent(
-        vad=vad_plugin,
+    # Initialisation du module de session d'agent vocal (AgentSession)
+    logger.info("Initialisation de l'agent vocal (AgentSession)...")
+    session = AgentSession(
         stt=stt_plugin,
         llm=llm_plugin,
         tts=tts_plugin,
-        chat_ctx=chat_context,
-        will_first_say="Bonjour. Je suis venu pour retirer cent mille dirhams de mon compte, maintenant.",
+        turn_handling=TurnHandlingOptions(
+            turn_detection=inference.TurnDetector(),
+        ),
     )
 
     # Démarrage de l'agent dans le salon LiveKit
     logger.info("Démarrage de l'agent conversationnel...")
-    agent.start(ctx.room)
+    await session.start(
+        room=ctx.room,
+        agent=Agent(
+            instructions=SYSTEM_INSTRUCTIONS,
+        ),
+    )
     logger.info("Agent actif et en attente d'interaction vocale.")
+
+    # Salutation initiale par le client mécontent
+    await session.say(
+        "Bonjour. Je suis venu pour retirer cent mille dirhams de mon compte, maintenant.",
+        allow_interruptions=True
+    )
 
 if __name__ == "__main__":
     # Lancement du worker LiveKit CLI
