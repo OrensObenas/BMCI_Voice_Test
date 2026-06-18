@@ -62,3 +62,32 @@ Pour générer à nouveau ou ajouter d'autres modèles, lancez simplement :
 ```powershell
 .venv\Scripts\python generate_discussion.py --models kokoro melo edgetts gtts hume mistral f5tts
 ```
+
+---
+
+## 🤖 Agent Conversationnel Virtuel (Simulation Temps Réel LiveKit)
+
+Nous avons implémenté un agent vocal intelligent en temps réel capable de simuler un client de banque mécontent (**M. Orens**) pour des sessions d'entraînement de conseillers.
+
+### ⚙️ Technologies Utilisées :
+* **Détection vocale (VAD)** : Silero VAD (intégré pour une turn-detection naturelle).
+* **Transcription (STT)** : **ElevenLabs Scribe v2** (le modèle STT le plus précis du benchmark).
+* **Moteur d'IA (LLM)** : **Google Gemini 1.5 Flash** (pour le raisonnement conversationnel rapide et l'interprétation du rôle).
+* **Synthèse Vocale (TTS)** : **ElevenLabs** avec la voix **`Adam`** (voix masculine ferme et expressive, idéale pour le client mécontent).
+
+### 📁 Fichiers Ajoutés :
+* **Script de l'agent** : [agent.py](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/agent.py)
+* **Dépendances** : [requirements.txt](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/requirements.txt) mis à jour.
+
+### 🚀 Lancement de la Simulation :
+1. Démarrez votre serveur local LiveKit :
+   ```powershell
+   livekit-server --dev
+   ```
+2. Lancez l'agent vocal :
+   ```powershell
+   .venv\Scripts\python agent.py dev
+   ```
+3. Ouvrez le Playground LiveKit dans votre navigateur : [https://agents-playground.livekit.io/](https://agents-playground.livekit.io/)
+4. Connectez-vous à l'adresse de votre serveur local (`ws://localhost:7880`) pour commencer à dialoguer à l'oral avec le client virtuel !
+
