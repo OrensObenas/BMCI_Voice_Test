@@ -219,7 +219,7 @@ async def entrypoint(ctx: JobContext):
 
     # Configuration du LLM Google Gemini
     logger.info("Configuration du LLM Google Gemini...")
-    llm_plugin = google.LLM(model="gemini-1.5-flash")
+    llm_plugin = google.LLM(model="gemini-2.5-flash")
 
     # Configuration du TTS local Kokoro
     logger.info("Configuration du TTS Kokoro local...")

@@ -74,14 +74,14 @@ Pour répondre à votre demande, nous avons migré l'agent vocal LiveKit d'Eleve
 2. **TTS (Synthèse vocale) Local** : Nous avons développé la classe `LocalKokoroTTS` (qui hérite de `livekit.agents.tts.TTS`) utilisant le pipeline `kokoro-82M` (v0.19) avec la voix française féminine `ff_siwis`.
    * Kokoro génère la voix à la volée sur CPU de manière extrêmement rapide (< 300 ms de temps de réponse).
    * L'audio généré (float32) est normalisé et converti en PCM 16 bits à 24 kHz avant d'être injecté dans le flux audio LiveKit via `tts.AudioEmitter`.
-3. **LLM** : Nous conservons **Google Gemini 1.5 Flash** (via votre clé API validée) afin de garder des réponses ultra-rapides et intelligentes tout en jouant le rôle de **M. Orens** (le client fâché exigeant de retirer 100 000 DH).
+3. **LLM** : Nous utilisons **Google Gemini 2.5 Flash** (via votre clé API validée) afin de garder des réponses ultra-rapides et intelligentes tout en jouant le rôle de **M. Orens** (le client fâché exigeant de retirer 100 000 DH).
 
 ### Statut du Service et Lancement
 L'agent a été testé avec succès. Il a démarré et s'est connecté à votre salon LiveKit Cloud :
 *   **Salon** : `wss://internship-obt2eynj.livekit.cloud`
-*   **Worker ID** : `AW_veeFFvMTxrkK`
+*   **Worker ID** : `AW_vikgpzWmcHqV`
 *   **Région** : `EU West B`
-*   **Logs d'exécution** : [task-2876.log](file:///C:/Users/user/.gemini/antigravity/brain/0aa50022-c315-4341-8510-fa64795e2544/.system_generated/tasks/task-2876.log)
+*   **Logs d'exécution** : [task-2965.log](file:///C:/Users/user/.gemini/antigravity/brain/0aa50022-c315-4341-8510-fa64795e2544/.system_generated/tasks/task-2965.log)
 *   **Script de l'agent mis à jour** : [agent.py](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/agent.py)
 
 ### 🚀 Lancement de la Simulation :
