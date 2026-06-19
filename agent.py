@@ -35,7 +35,7 @@ from livekit.agents import (
     DEFAULT_API_CONNECT_OPTIONS
 )
 from livekit.agents.utils import AudioBuffer, shortuuid
-from livekit.plugins import google
+from livekit.plugins import google, openai
 
 logger = logging.getLogger("bank-agent")
 
@@ -242,9 +242,13 @@ async def entrypoint(ctx: JobContext):
         vad=inference.VAD()
     )
 
-    # Configuration du LLM Google Gemini
-    logger.info("Configuration du LLM Google Gemini...")
-    llm_plugin = google.LLM(model="gemini-2.5-flash")
+    # Configuration du LLM Mistral via l'adaptateur OpenAI
+    logger.info("Configuration du LLM Mistral (mistral-small-latest)...")
+    llm_plugin = openai.LLM(
+        model="mistral-small-latest",
+        base_url="https://api.mistral.ai/v1",
+        api_key=os.getenv("MISTRAL_API_KEY")
+    )
 
     # Configuration du TTS Mistral (voix irritée 'fr_marie_angry')
     logger.info("Configuration du TTS Mistral API...")
