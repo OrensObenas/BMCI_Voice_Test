@@ -17,6 +17,10 @@ load_dotenv()
 if "GEMINI_API_KEY" in os.environ and "GOOGLE_API_KEY" not in os.environ:
     os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
 
+# S'assurer que ELEVEN_API_KEY et ELEVENLABS_API_KEY sont synchronisés pour ElevenLabs
+if "ELEVENLABS_API_KEY" in os.environ and "ELEVEN_API_KEY" not in os.environ:
+    os.environ["ELEVEN_API_KEY"] = os.environ["ELEVENLABS_API_KEY"]
+
 from livekit import rtc
 from livekit.agents import (
     JobContext,
@@ -245,6 +249,21 @@ class MistralChunkedStream(tts.ChunkedStream):
         output_emitter.flush()
 
 
+
+class CustomElevenLabsTTS(elevenlabs.TTS):
+    """Adaptateur ElevenLabs pour nettoyer les tags audio entre crochets [sighs] avant envoi."""
+    def synthesize(
+        self, text: str, *, conn_options = None
+    ) -> tts.ChunkedStream:
+        import re
+        cleaned_text = re.sub(r"\[[^\]]+\]", "", text).strip()
+        if not cleaned_text:
+            cleaned_text = "..."
+        if conn_options is not None:
+            return super().synthesize(cleaned_text, conn_options=conn_options)
+        return super().synthesize(cleaned_text)
+
+
 async def entrypoint(ctx: JobContext):
     logger.info("Connexion au salon LiveKit...")
     await ctx.connect()
@@ -266,10 +285,10 @@ async def entrypoint(ctx: JobContext):
         api_key=os.getenv("MISTRAL_API_KEY")
     )
 
-    # Configuration du TTS ElevenLabs (modèle v3 pour les tags audio)
-    logger.info("Configuration du TTS ElevenLabs API (eleven_v3)...")
-    tts_plugin = elevenlabs.TTS(
-        model="eleven_v3",
+    # Configuration du TTS ElevenLabs (modèle multilingual v2 avec filtre de tags)
+    logger.info("Configuration du TTS ElevenLabs API (eleven_multilingual_v2)...")
+    tts_plugin = CustomElevenLabsTTS(
+        model="eleven_multilingual_v2",
         voice_id="pNInz6obpgDQGcFmaJgB",  # Adam
     )
 
