@@ -39,7 +39,7 @@ from livekit.agents import (
     DEFAULT_API_CONNECT_OPTIONS
 )
 from livekit.agents.utils import AudioBuffer, shortuuid
-from livekit.plugins import google, openai, elevenlabs
+from livekit.plugins import google, openai, elevenlabs, hume
 
 logger = logging.getLogger("bank-agent")
 
@@ -304,6 +304,22 @@ class CustomElevenLabsTTS(elevenlabs.TTS):
         return stream
 
 
+class CustomHumeTTS(hume.TTS):
+    """Adaptateur Hume AI TTS pour nettoyer les émotions à l'écrit avant synthèse."""
+    def synthesize(
+        self, text: str, *, conn_options = None
+    ) -> tts.ChunkedStream:
+        import re
+        # Nettoyer à la fois les astérisques et les crochets
+        cleaned_text = re.sub(r"\*[^*]+\*", "", text)
+        cleaned_text = re.sub(r"\[[^\]]+\]", "", cleaned_text).strip()
+        if not cleaned_text:
+            cleaned_text = "..."
+        if conn_options is not None:
+            return super().synthesize(cleaned_text, conn_options=conn_options)
+        return super().synthesize(cleaned_text)
+
+
 async def entrypoint(ctx: JobContext):
     logger.info("Connexion au salon LiveKit...")
     await ctx.connect()
@@ -325,9 +341,12 @@ async def entrypoint(ctx: JobContext):
         api_key=os.getenv("MISTRAL_API_KEY")
     )
 
-    # Configuration du TTS Mistral (voix Marie en colère 'fr_marie_angry')
-    logger.info("Configuration du TTS Mistral API...")
-    tts_plugin = MistralTTS(voice="fr_marie_angry")
+    # Configuration du TTS Hume AI (meilleure qualité vocale, émotionnelle via description)
+    logger.info("Configuration du TTS Hume AI API...")
+    tts_plugin = CustomHumeTTS(
+        voice=hume.VoiceByName(name="Benjamin", provider=hume.VoiceProvider.hume),
+        description="An angry, irritated bank client. Sound impatient, frustrated, and aggressive.",
+    )
 
     # Initialisation du module de session d'agent vocal (AgentSession)
     logger.info("Initialisation de l'agent vocal (AgentSession)...")
