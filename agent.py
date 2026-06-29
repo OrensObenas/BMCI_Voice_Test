@@ -169,6 +169,9 @@ class MistralChunkedStream(tts.ChunkedStream):
         self._api_key = api_key
 
     async def _run(self, output_emitter: tts.AudioEmitter) -> None:
+        import re
+        cleaned_text = re.sub(r"\*[^*]+\*", "", self.input_text).strip()
+
         output_emitter.initialize(
             request_id=shortuuid(),
             sample_rate=48000,
@@ -176,6 +179,10 @@ class MistralChunkedStream(tts.ChunkedStream):
             mime_type="audio/pcm",
             stream=False,
         )
+
+        if not cleaned_text:
+            output_emitter.flush()
+            return
         
         loop = asyncio.get_running_loop()
         def _generate():
@@ -186,7 +193,7 @@ class MistralChunkedStream(tts.ChunkedStream):
             }
             payload = {
                 "model": "voxtral-mini-tts-2603",
-                "input": self.input_text,
+                "input": cleaned_text,
                 "voice": self._voice,
                 "response_format": "wav",
             }
