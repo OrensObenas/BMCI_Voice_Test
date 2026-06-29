@@ -183,7 +183,9 @@ class MistralChunkedStream(tts.ChunkedStream):
 
     async def _run(self, output_emitter: tts.AudioEmitter) -> None:
         import re
-        cleaned_text = re.sub(r"\*[^*]+\*", "", self.input_text).strip()
+        # Nettoyer à la fois les astérisques (*Rires*) et les crochets ([sighs])
+        cleaned_text = re.sub(r"\*[^*]+\*", "", self.input_text)
+        cleaned_text = re.sub(r"\[[^\]]+\]", "", cleaned_text).strip()
 
         output_emitter.initialize(
             request_id=shortuuid(),
@@ -250,18 +252,56 @@ class MistralChunkedStream(tts.ChunkedStream):
 
 
 
+from livekit.plugins.elevenlabs.tts import SynthesizeStream as ElevenLabsSynthesizeStream
+from livekit.plugins.elevenlabs.tts import DEFAULT_API_CONNECT_OPTIONS as ELEVEN_DEFAULT_API_CONNECT_OPTIONS
+import re
+
+class CustomSynthesizeStream(ElevenLabsSynthesizeStream):
+    """Flux de synthèse personnalisé pour nettoyer à la volée les tags d'émotion entre crochets sur le flux de tokens."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._inside_bracket = False
+
+    def push_text(self, token: str) -> None:
+        cleaned_chars = []
+        for char in token:
+            if char == '[':
+                self._inside_bracket = True
+            elif char == ']':
+                self._inside_bracket = False
+            else:
+                if not self._inside_bracket:
+                    cleaned_chars.append(char)
+        
+        cleaned_token = "".join(cleaned_chars)
+        if cleaned_token:
+            super().push_text(cleaned_token)
+
+
 class CustomElevenLabsTTS(elevenlabs.TTS):
     """Adaptateur ElevenLabs pour nettoyer les tags audio entre crochets [sighs] avant envoi."""
     def synthesize(
         self, text: str, *, conn_options = None
     ) -> tts.ChunkedStream:
-        import re
         cleaned_text = re.sub(r"\[[^\]]+\]", "", text).strip()
         if not cleaned_text:
             cleaned_text = "..."
         if conn_options is not None:
             return super().synthesize(cleaned_text, conn_options=conn_options)
         return super().synthesize(cleaned_text)
+
+    def stream(
+        self, *, conn_options = None
+    ) -> tts.SynthesizeStream:
+        kwargs = {}
+        if conn_options is not None:
+            kwargs["conn_options"] = conn_options
+        else:
+            kwargs["conn_options"] = ELEVEN_DEFAULT_API_CONNECT_OPTIONS
+            
+        stream = CustomSynthesizeStream(tts=self, **kwargs)
+        self._streams.add(stream)
+        return stream
 
 
 async def entrypoint(ctx: JobContext):
@@ -285,12 +325,9 @@ async def entrypoint(ctx: JobContext):
         api_key=os.getenv("MISTRAL_API_KEY")
     )
 
-    # Configuration du TTS ElevenLabs (modèle multilingual v2 avec filtre de tags)
-    logger.info("Configuration du TTS ElevenLabs API (eleven_multilingual_v2)...")
-    tts_plugin = CustomElevenLabsTTS(
-        model="eleven_multilingual_v2",
-        voice_id="pNInz6obpgDQGcFmaJgB",  # Adam
-    )
+    # Configuration du TTS Mistral (voix Marie en colère 'fr_marie_angry')
+    logger.info("Configuration du TTS Mistral API...")
+    tts_plugin = MistralTTS(voice="fr_marie_angry")
 
     # Initialisation du module de session d'agent vocal (AgentSession)
     logger.info("Initialisation de l'agent vocal (AgentSession)...")
