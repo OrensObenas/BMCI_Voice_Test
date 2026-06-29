@@ -35,7 +35,7 @@ from livekit.agents import (
     DEFAULT_API_CONNECT_OPTIONS
 )
 from livekit.agents.utils import AudioBuffer, shortuuid
-from livekit.plugins import google, openai
+from livekit.plugins import google, openai, elevenlabs
 
 logger = logging.getLogger("bank-agent")
 
@@ -50,6 +50,15 @@ Consignes de rôle pour la simulation :
 - Tu n'expliques pourquoi tu as besoin de cette somme (acheter une maison, le vendeur attend l'argent aujourd'hui sinon il vend à quelqu'un d'autre) QUE si la conseillère te le demande poliment ou s'intéresse sincèrement à ton problème.
 - Tu es méfiant face aux solutions alternatives (comme le virement). Tu ne te laisses convaincre par un virement que si la conseillère t'assure patiemment qu'il arrivera aujourd'hui avant midi sans risque.
 - Réponds avec des phrases courtes, directes et naturelles (langage parlé de tous les jours). Ne fais pas de longues phrases littéraires ou de listes à puces. Sois réactif et coupé dans ton élan si l'agent t'interrompt.
+
+Instructions importantes pour l'expressivité de la voix :
+- N'utilise JAMAIS de texte entre astérisques pour décrire tes émotions (ex: évite *Soupir* ou *Rires*).
+- Utilise à la place exclusivement les tags audio d'ElevenLabs entre crochets pour faire réagir physiquement la synthèse vocale. Choisis uniquement parmi :
+  * [sighs] (pour exprimer le dépit, la fatigue ou l'exaspération)
+  * [laughs] (pour un rire sarcastique ou moqueur face aux propositions de virement)
+  * [gasp] (pour l'indignation, l'inspiration ou la surprise)
+  * [whispers] (si tu veux baisser le ton ou murmurer une remarque méfiante)
+- Place ces tags au début ou au milieu de tes phrases. Exemple : "[sighs] Écoutez, c'est pas vos affaires... [laughs] Un virement ? Vous rigolez ?"
 """
 
 def pcm_to_wav(pcm_data: bytes, sample_rate: int, num_channels: int) -> bytes:
@@ -257,9 +266,12 @@ async def entrypoint(ctx: JobContext):
         api_key=os.getenv("MISTRAL_API_KEY")
     )
 
-    # Configuration du TTS Mistral (voix irritée 'fr_marie_angry')
-    logger.info("Configuration du TTS Mistral API...")
-    tts_plugin = MistralTTS(voice="fr_marie_angry")
+    # Configuration du TTS ElevenLabs (modèle v3 pour les tags audio)
+    logger.info("Configuration du TTS ElevenLabs API (eleven_v3)...")
+    tts_plugin = elevenlabs.TTS(
+        model="eleven_v3",
+        voice_id="pNInz6obpgDQGcFmaJgB",  # Adam
+    )
 
     # Initialisation du module de session d'agent vocal (AgentSession)
     logger.info("Initialisation de l'agent vocal (AgentSession)...")
@@ -284,7 +296,7 @@ async def entrypoint(ctx: JobContext):
 
     # Salutation initiale par le client mécontent
     await session.say(
-        "Bonjour. Je suis venu pour retirer cent mille dirhams de mon compte, maintenant.",
+        "[sighs] Bonjour. Je suis venu pour retirer cent mille dirhams de mon compte, maintenant.",
         allow_interruptions=True
     )
 
