@@ -305,11 +305,8 @@ async def entrypoint(ctx: JobContext):
     )
     logger.info("Agent actif et en attente d'interaction vocale.")
 
-    # Salutation initiale par le client mécontent
-    await session.say(
-        "[sighs] Bonjour. Je suis venu pour retirer cent mille dirhams de mon compte, maintenant.",
-        allow_interruptions=True
-    )
+    # L'agent reste silencieux à la connexion et attend que l'utilisateur commence
+    pass
 
 if __name__ == "__main__":
     # Lancement du worker LiveKit CLI
