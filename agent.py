@@ -39,7 +39,7 @@ from livekit.agents import (
     DEFAULT_API_CONNECT_OPTIONS
 )
 from livekit.agents.utils import AudioBuffer, shortuuid
-from livekit.plugins import google, openai, elevenlabs, hume
+from livekit.plugins import google, openai, elevenlabs
 
 logger = logging.getLogger("bank-agent")
 
@@ -252,105 +252,7 @@ class MistralChunkedStream(tts.ChunkedStream):
 
 
 
-from livekit.plugins.elevenlabs.tts import SynthesizeStream as ElevenLabsSynthesizeStream
-from livekit.plugins.elevenlabs.tts import DEFAULT_API_CONNECT_OPTIONS as ELEVEN_DEFAULT_API_CONNECT_OPTIONS
-import re
 
-class CustomSynthesizeStream(ElevenLabsSynthesizeStream):
-    """Flux de synthèse personnalisé pour nettoyer à la volée les tags d'émotion entre crochets sur le flux de tokens."""
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._inside_bracket = False
-
-    def push_text(self, token: str) -> None:
-        cleaned_chars = []
-        for char in token:
-            if char == '[':
-                self._inside_bracket = True
-            elif char == ']':
-                self._inside_bracket = False
-            else:
-                if not self._inside_bracket:
-                    cleaned_chars.append(char)
-        
-        cleaned_token = "".join(cleaned_chars)
-        if cleaned_token:
-            super().push_text(cleaned_token)
-
-
-class CustomElevenLabsTTS(elevenlabs.TTS):
-    """Adaptateur ElevenLabs pour nettoyer les tags audio entre crochets [sighs] avant envoi."""
-    def synthesize(
-        self, text: str, *, conn_options = None
-    ) -> tts.ChunkedStream:
-        cleaned_text = re.sub(r"\[[^\]]+\]", "", text).strip()
-        if not cleaned_text:
-            cleaned_text = "..."
-        if conn_options is not None:
-            return super().synthesize(cleaned_text, conn_options=conn_options)
-        return super().synthesize(cleaned_text)
-
-    def stream(
-        self, *, conn_options = None
-    ) -> tts.SynthesizeStream:
-        kwargs = {}
-        if conn_options is not None:
-            kwargs["conn_options"] = conn_options
-        else:
-            kwargs["conn_options"] = ELEVEN_DEFAULT_API_CONNECT_OPTIONS
-            
-        stream = CustomSynthesizeStream(tts=self, **kwargs)
-        self._streams.add(stream)
-        return stream
-
-
-class FallbackChunkedStream(tts.ChunkedStream):
-    """Flux de synthèse qui tente Hume AI et bascule automatiquement sur Mistral en cas d'erreur (rate limit 429, etc.)."""
-    def __init__(self, hume_stream, fallback_tts, text, conn_options):
-        super().__init__(
-            tts=hume_stream._tts,
-            input_text=text,
-            conn_options=conn_options
-        )
-        self._hume_stream = hume_stream
-        self._fallback_tts = fallback_tts
-        self._text = text
-        self._conn_options = conn_options
-
-    async def _run(self, output_emitter: tts.AudioEmitter) -> None:
-        try:
-            await self._hume_stream._run(output_emitter)
-        except Exception as e:
-            logger.warning(f"Hume AI TTS a échoué ({e}), basculement sur le fallback Mistral TTS (Marie)...")
-            fallback_stream = self._fallback_tts.synthesize(self._text, conn_options=self._conn_options)
-            await fallback_stream._run(output_emitter)
-
-
-class CustomHumeTTS(hume.TTS):
-    """Adaptateur Hume AI TTS avec nettoyage des tags et repli automatique vers Mistral."""
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._fallback_tts = MistralTTS(voice="fr_marie_angry")
-
-    def synthesize(
-        self, text: str, *, conn_options = None
-    ) -> tts.ChunkedStream:
-        import re
-        # Nettoyer à la fois les astérisques et les crochets
-        cleaned_text = re.sub(r"\*[^*]+\*", "", text)
-        cleaned_text = re.sub(r"\[[^\]]+\]", "", cleaned_text).strip()
-        if not cleaned_text:
-            cleaned_text = "..."
-            
-        resolved_conn = conn_options if conn_options is not None else DEFAULT_API_CONNECT_OPTIONS
-        hume_stream = super().synthesize(cleaned_text, conn_options=resolved_conn)
-        
-        return FallbackChunkedStream(
-            hume_stream=hume_stream,
-            fallback_tts=self._fallback_tts,
-            text=cleaned_text,
-            conn_options=resolved_conn
-        )
 
 
 async def entrypoint(ctx: JobContext):
@@ -374,12 +276,9 @@ async def entrypoint(ctx: JobContext):
         api_key=os.getenv("MISTRAL_API_KEY")
     )
 
-    # Configuration du TTS Hume AI (meilleure qualité vocale, émotionnelle via description)
-    logger.info("Configuration du TTS Hume AI API...")
-    tts_plugin = CustomHumeTTS(
-        voice=hume.VoiceByName(name="Benjamin", provider=hume.VoiceProvider.hume),
-        description="An angry, irritated bank client. Sound impatient, frustrated, and aggressive.",
-    )
+    # Configuration du TTS Mistral (voix Marie en colère 'fr_marie_angry')
+    logger.info("Configuration du TTS Mistral API...")
+    tts_plugin = MistralTTS(voice="fr_marie_angry")
 
     # Initialisation du module de session d'agent vocal (AgentSession)
     logger.info("Initialisation de l'agent vocal (AgentSession)...")
