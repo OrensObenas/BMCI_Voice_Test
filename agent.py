@@ -288,6 +288,10 @@ async def entrypoint(ctx: JobContext):
         tts=tts_plugin,
         turn_handling=TurnHandlingOptions(
             turn_detection=inference.TurnDetector(),
+            endpointing=dict(
+                mode="fixed",
+                min_delay=0.8,
+            )
         ),
     )
 
