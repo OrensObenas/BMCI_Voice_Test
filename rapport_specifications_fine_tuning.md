@@ -4,6 +4,20 @@ Ce rapport détaille les spécifications requises (volumes, formats, matériel) 
 
 ---
 
+## 📊 Tableau Synthétique : Prérequis de Fine-Tuning par Modèle
+
+| Modèle | Type | Volume de données min. | Format requis | Ressource GPU | Traitement Spécial / Prérequis Unique |
+| :--- | :---: | :--- | :--- | :--- | :--- |
+| **ElevenLabs (PVC)** | TTS | 30 min (idéalement 3h) | Audio brut continu | Cloud (Aucun GPU local) | Abonnement payant (Creator) + Authentification vocale obligatoire (anti-deepfake). |
+| **Hume AI** | TTS | Aucun | Texte de description | Cloud (Aucun GPU local) | Pas d'entraînement classique. Ajustement via prompt comportemental ou curseurs API. |
+| **F5-TTS** | TTS | 30 min à 2h | WAV Mono 24 kHz + `metadata.csv` | GPU local (min. 16 Go VRAM) | Suppression du bruit (Denoiser) + Convertisseur phonétique (G2P) français obligatoire. |
+| **Whisper** | STT | 10h à 50h | WAV/MP3 + Textes horodatés | GPU local (min. 24 Go VRAM) | Tokenizer Whisper requis + Gel de l'encodeur (saving memory) + Normalisation du texte. |
+| **Cohere Transcribe** | STT | Aucun | Liste écrite de termes | Cloud (Aucun GPU local) | Pas d'entraînement direct. Utilisation de la fonction "Custom Vocabulary" (Hotwords) par API. |
+| **Mistral Small** | LLM | 100 à 200 dialogues | JSONL (Format Chat strict) | Cloud (Aucun GPU local) | Entraînement géré sur la console cloud de Mistral. Format de rôles (system/user/assistant) obligatoire. |
+| **Google Gemini** | LLM | 100+ dialogues | JSONL (Format Chat) | Cloud (Aucun GPU local) | Entraînement par adaptateur LoRA hébergé et configuré sur Google AI Studio. |
+
+---
+
 ## 1. Modèles de Synthèse Vocale (TTS)
 
 ### A. Spécifications Générales
