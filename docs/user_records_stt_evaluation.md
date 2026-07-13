@@ -11,23 +11,23 @@ Le tableau ci-dessous regroupe les résultats de transcription pour chaque appar
 > [!TIP]
 > Un RTF de **0.022** signifie que le modèle a transcrit l'audio **50 fois plus vite** que le temps réel de lecture.
 
-| Appareil / Enregistrement | Modèle STT | WER (%) | CER (%) | Latence (s) | RTF |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| 💻 **BMCI Computer** *(171.16 s)* | **ElevenLabs Scribe v2** | **6.65%** | **4.39%** | 22.14 s | 0.129 |
-| | **Cohere Transcribe v2** | **8.32%** | **5.70%** | 5.03 s | 0.029 |
-| | **Whisper Large-Turbo (Local)** | **9.15%** | **5.89%** | 115.92 s | 0.677 |
-| | **Mistral Voxtral** | **9.56%** | **6.28%** | 4.48 s | 0.026 |
-| | **Whisper Base (Local)** | 23.28% | 12.71% | 17.88 s | 0.104 |
-| 🎧 **Headset** *(169.22 s)* | **ElevenLabs Scribe v2** | **3.95%** | **2.81%** | 14.94 s | 0.088 |
-| | **Cohere Transcribe v2** | **8.52%** | **5.58%** | 5.09 s | 0.030 |
-| | **Mistral Voxtral** | **9.77%** | **6.43%** | 3.98 s | 0.024 |
-| | **Whisper Large-Turbo (Local)** | 13.93% | 9.13% | 132.61 s | 0.784 |
-| | **Whisper Base (Local)** | 29.11% | 16.48% | 19.15 s | 0.113 |
-| 📱 **Phone** *(172.52 s)* | **ElevenLabs Scribe v2** | **3.12%** | **2.19%** | 21.02 s | 0.122 |
-| | **Cohere Transcribe v2** | **5.82%** | **3.70%** | 5.43 s | 0.031 |
-| | **Mistral Voxtral** | **5.82%** | **3.85%** | 3.86 s | 0.022 |
-| | **Whisper Large-Turbo (Local)** | **6.03%** | **3.93%** | 132.91 s | 0.770 |
-| | **Whisper Base (Local)** | 18.92% | 10.97% | 18.08 s | 0.105 |
+| Appareil / Enregistrement　　　　 | Modèle STT                      | WER (%)   | CER (%)   | Latence (s) | RTF   |
+| :----------------------------------| :--------------------------------| :---------:| :---------:| :-----------:| :-----:|
+| 💻 **BMCI Computer** *(171.16 s)* | **ElevenLabs Scribe v2**        | **6.65%** | **4.39%** | 22.14 s     | 0.129 |
+| 　　　　　　　　　　　　　　　　　| **Cohere Transcribe v2**        | **8.32%** | **5.70%** | 5.03 s      | 0.029 |
+| 　　　　　　　　　　　　　　　　　| **Whisper Large-Turbo (Local)** | **9.15%** | **5.89%** | 115.92 s    | 0.677 |
+| 　　　　　　　　　　　　　　　　　| **Mistral Voxtral**             | **9.56%** | **6.28%** | 4.48 s      | 0.026 |
+| 　　　　　　　　　　　　　　　　　| **Whisper Base (Local)**        | 23.28%    | 12.71%    | 17.88 s     | 0.104 |
+| 🎧 **Headset** *(169.22 s)*　　　 | **ElevenLabs Scribe v2**        | **3.95%** | **2.81%** | 14.94 s     | 0.088 |
+| 　　　　　　　　　　　　　　　　　| **Cohere Transcribe v2**        | **8.52%** | **5.58%** | 5.09 s      | 0.030 |
+| 　　　　　　　　　　　　　　　　　| **Mistral Voxtral**             | **9.77%** | **6.43%** | 3.98 s      | 0.024 |
+| 　　　　　　　　　　　　　　　　　| **Whisper Large-Turbo (Local)** | 13.93%    | 9.13%     | 132.61 s    | 0.784 |
+| 　　　　　　　　　　　　　　　　　| **Whisper Base (Local)**        | 29.11%    | 16.48%    | 19.15 s     | 0.113 |
+| 📱 **Phone** *(172.52 s)*　　　　 | **ElevenLabs Scribe v2**        | **3.12%** | **2.19%** | 21.02 s     | 0.122 |
+| 　　　　　　　　　　　　　　　　　| **Cohere Transcribe v2**        | **5.82%** | **3.70%** | 5.43 s      | 0.031 |
+| 　　　　　　　　　　　　　　　　　| **Mistral Voxtral**             | **5.82%** | **3.85%** | 3.86 s      | 0.022 |
+| 　　　　　　　　　　　　　　　　　| **Whisper Large-Turbo (Local)** | **6.03%** | **3.93%** | 132.91 s    | 0.770 |
+| 　　　　　　　　　　　　　　　　　| **Whisper Base (Local)**        | 18.92%    | 10.97%    | 18.08 s     | 0.105 |
 
 ---
 

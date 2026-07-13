@@ -38,16 +38,3 @@ LiveKit s'est révélé être une technologie excellente pour ce projet. Voici s
 * **La dépendance aux APIs Cloud** : Les versions gratuites des APIs (comme Hume AI ou Gemini) bloquent rapidement l'agent si on parle trop vite (erreurs 429 Too Many Requests). 
 * **L'absence de streaming audio sur Mistral TTS** : Mistral Voxtral doit générer toute la phrase d'un coup avant de commencer à parler, ce qui crée un léger temps d'attente au début de sa réplique.
 
----
-
-## 4. Perspectives d'Amélioration
-
-Pour rendre l'agent encore plus humain et instantané, voici les pistes à suivre :
-
-### A. Passer au "Speech-to-Speech" natif (S2S)
-* **Comment ça marche** : Utiliser des modèles comme **OpenAI Realtime** ou **Gemini Live**. Au lieu de faire STT ➔ LLM ➔ TTS, on envoie directement le son de votre voix à l'IA, et elle répond directement avec sa voix.
-* **Avantage** : La latence descend sous les **400 millisecondes** (presque instantané, comme un humain), et l'IA comprend l'intonation de votre voix (si vous êtes calme, stressé, etc.).
-
-### B. Héberger les modèles en local (Serveur GPU)
-* **Comment ça marche** : Installer des modèles gratuits open-source (*Whisper* pour l'écoute, *Llama 3* pour la réflexion) sur un serveur équipé d'une carte graphique dédiée.
-* **Avantage** : Plus aucun abonnement payant à régler, aucune limite de requêtes par minute (plus de bugs 429), et une confidentialité totale des données.

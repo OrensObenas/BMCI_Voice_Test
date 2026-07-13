@@ -6,33 +6,33 @@ Ce document rassemble les informations détaillées, les sources officielles et 
 
 ## 📊 Tableau de Synthèse des 25 Modèles
 
-| Rang | Modèle | Type | Auteur / Organisme | Source / Repo GitHub | Support FR Natif | Statut de Faisabilité (Local CPU Windows) |
-|---|---|---|---|---|:---:|---|
-| **#1** | **ElevenLabs** | Propriétaire API | ElevenLabs | [elevenlabs.io](https://elevenlabs.io) | ✅ Oui | **Testé & Intégré** (via API REST) |
-| **#2** | **Hume Octave** | Propriétaire API | Hume AI | [hume.ai](https://hume.ai) | ✅ Oui | **Possible** (requiert clé API) |
-| **#3** | **Papla P1** | Propriétaire API | Papla Media | [papla.media](https://papla.media) | ✅ Oui | **Possible** (API / Ne marche pas en libre) |
-| **#4** | **Play.HT 2.0** | Propriétaire API | Play.HT | [play.ht](https://play.ht) | ✅ Oui | **Possible** (API / Ne marche pas en libre) |
-| **#5** | **Play.HT 3.0 Mini** | Propriétaire API | Play.HT | [play.ht](https://play.ht) | ✅ Oui | **Possible** (API / Ne marche pas en libre) |
-| **#6** | **Kokoro v0.19** | Open Weights | ShoukanLabs / Hexgrad | [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) | ✅ Oui | **Possible** (Préférer v1.0 disponible localement) |
-| **#7** | **Kokoro v1.0** | Open Weights | ShoukanLabs / Hexgrad | [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) | ✅ Oui | **Testé & Intégré** (Local CPU) |
-| **#8** | **Fish Speech v1.5** | Open Weights | Fish Audio | [fishaudio/fish-speech](https://github.com/fishaudio/fish-speech) | ✅ Oui | **Bloqué** (GPU VRAM 8+ GB requis) |
-| **#9** | **XTTSv2** | Open Weights | Coqui.ai | [coqui-ai/TTS](https://github.com/coqui-ai/TTS) | ✅ Oui | **Bloqué** (Dépendance numba sur Python 3.13) |
-| **#10**| **PlayDialog** | Propriétaire API | Play.HT | [play.ht](https://play.ht) | ✅ Oui | **Possible** (API propriétaire) |
-| **#11**| **MetaVoice** | Open Weights | MetaVoice | [metavoice-1B](https://github.com/metavoiceio/metavoice-src) | ❌ Anglais | **Bloqué** (Pas de FR natif, VRAM 12 GB requis) |
-| **#12**| **StyleTTS 2** | Open Weights | Li et al. | [yl4579/StyleTTS2](https://github.com/yl4579/StyleTTS2) | ❌ Anglais | **Bloqué** (Nécessite GPU + ré-entraînement en FR) |
-| **#13**| **PlayDialog 1.0** | Propriétaire API | Play.HT | [play.ht](https://play.ht) | ✅ Oui | **Possible** (API propriétaire) |
-| **#14**| **OpenVoice** | Open Weights | MyShell.ai | [myshell-ai/OpenVoice](https://github.com/myshell-ai/OpenVoice) | ⚠️ Via Melo | **Bloqué** (Dépendance C++ `fugashi` sur Win/Py3.13) |
-| **#15**| **MeloTTS** | Open Weights | MyShell.ai | [myshell-ai/MeloTTS](https://github.com/myshell-ai/MeloTTS) | ✅ Oui | **Bloqué** (Dépendance C++ `fugashi` sur Win/Py3.13) |
-| **#16**| **Fish Speech v1.4** | Open Weights | Fish Audio | [fishaudio/fish-speech](https://github.com/fishaudio/fish-speech) | ✅ Oui | **Bloqué** (GPU VRAM 8+ GB requis) |
-| **#17**| **GPT-SoVITS** | Open Weights | RVC-Boss | [RVC-Boss/GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) | ⚠️ Communautaire | **Bloqué** (GPU requis + interface lourde) |
-| **#18**| **WhisperSpeech**| Open Weights | Collabora | [collabora/WhisperSpeech](https://github.com/collabora/WhisperSpeech) | ✅ Oui | **Bloqué** (GPU CUDA fortement requis) |
-| **#19**| **CosyVoice 2.0**| Open Weights | Alibaba FunASR | [FunAudioLLM/CosyVoice](https://github.com/FunAudioLLM/CosyVoice) | ✅ Oui | **Bloqué** (GPU VRAM 8-12 GB requis) |
-| **#20**| **Parler TTS Large**| Open Weights | Hugging Face | [huggingface/parler-tts](https://github.com/huggingface/parler-tts) | ✅ Oui | **Bloqué** (GPU requis + trop lourd sur CPU) |
-| **#21**| **Parler TTS** | Open Weights | Hugging Face | [huggingface/parler-tts](https://github.com/huggingface/parler-tts) | ✅ Oui | **Bloqué** (GPU requis) |
-| **#22**| **Vokan TTS** | Open Weights | ShoukanLabs | [shoukanlabs/Vokan](https://huggingface.co/shoukanlabs/Vokan) | ❌ Anglais | **Bloqué** (StyleTTS2 fine-tune, anglais uniquement) |
-| **#23**| **OpenVoice V2** | Open Weights | MyShell.ai | [myshell-ai/OpenVoice](https://github.com/myshell-ai/OpenVoice) | ⚠️ Via Melo | **Bloqué** (Mêmes dépendances C++ `fugashi`) |
-| **#24**| **VoiceCraft 2.0**| Open Weights | UT Austin | [jasonppy/VoiceCraft](https://github.com/jasonppy/VoiceCraft) | ❌ Anglais | **Bloqué** (Anglais natif, VRAM 16 GB+ requis) |
-| **#25**| **Pheme** | Open Weights | Stability AI | [Pheme](https://github.com/jasonboesch/VoiceCraft) | ❌ Anglais | **Bloqué** (Anglais uniquement, stade recherche) |
+| Rang    | Modèle               | Type             | Auteur / Organisme    | Source / Repo GitHub                                                  | Support FR Natif | Statut de Faisabilité (Local CPU Windows)            |
+| ---------| ----------------------| ------------------| -----------------------| -----------------------------------------------------------------------| :----------------:| ------------------------------------------------------|
+| **#1**  | **ElevenLabs**       | Propriétaire API | ElevenLabs            | [elevenlabs.io](https://elevenlabs.io)                                | ✅ Oui            | **Testé & Intégré** (via API REST)                   |
+| **#2**  | **Hume Octave**      | Propriétaire API | Hume AI               | [hume.ai](https://hume.ai)                                            | ✅ Oui            | **Possible** (requiert clé API)                      |
+| **#3**  | **Papla P1**         | Propriétaire API | Papla Media           | [papla.media](https://papla.media)                                    | ✅ Oui            | **Possible** (API / Ne marche pas en libre)          |
+| **#4**  | **Play.HT 2.0**      | Propriétaire API | Play.HT               | [play.ht](https://play.ht)                                            | ✅ Oui            | **Possible** (API / Ne marche pas en libre)          |
+| **#5**  | **Play.HT 3.0 Mini** | Propriétaire API | Play.HT               | [play.ht](https://play.ht)                                            | ✅ Oui            | **Possible** (API / Ne marche pas en libre)          |
+| **#6**  | **Kokoro v0.19**     | Open Weights     | ShoukanLabs / Hexgrad | [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)       | ✅ Oui            | **Possible** (Préférer v1.0 disponible localement)   |
+| **#7**  | **Kokoro v1.0**      | Open Weights     | ShoukanLabs / Hexgrad | [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)       | ✅ Oui            | **Testé & Intégré** (Local CPU)                      |
+| **#8**  | **Fish Speech v1.5** | Open Weights     | Fish Audio            | [fishaudio/fish-speech](https://github.com/fishaudio/fish-speech)     | ✅ Oui            | **Bloqué** (GPU VRAM 8+ GB requis)                   |
+| **#9**  | **XTTSv2**           | Open Weights     | Coqui.ai              | [coqui-ai/TTS](https://github.com/coqui-ai/TTS)                       | ✅ Oui            | **Bloqué** (Dépendance numba sur Python 3.13)        |
+| **#10** | **PlayDialog**       | Propriétaire API | Play.HT               | [play.ht](https://play.ht)                                            | ✅ Oui            | **Possible** (API   propriétaire)                      |
+| **#11** | **MetaVoice**        | Open Weights     | MetaVoice             | [metavoice-1B](https://github.com/metavoiceio/metavoice-src)          | ❌ Anglais        | **Bloqué** (Pas de FR natif, VRAM 12 GB requis)      |
+| **#12** | **StyleTTS 2**       | Open Weights     | Li et al.             | [yl4579/StyleTTS2](https://github.com/yl4579/StyleTTS2)               | ❌ Anglais        | **Bloqué** (Nécessite GPU + ré-entraînement en FR)   |
+| **#13** | **PlayDialog 1.0**   | Propriétaire API | Play.HT               | [play.ht](https://play.ht)                                            | ✅ Oui            | **Possible** (API propriétaire)                      |
+| **#14** | **OpenVoice**        | Open Weights     | MyShell.ai            | [myshell-ai/OpenVoice](https://github.com/myshell-ai/OpenVoice)       | ⚠️ Via Melo       | **Bloqué** (Dépendance C++ `fugashi` sur Win/Py3.13) |
+| **#15** | **MeloTTS**          | Open Weights     | MyShell.ai            | [myshell-ai/MeloTTS](https://github.com/myshell-ai/MeloTTS)           | ✅ Oui            | **Bloqué** (Dépendance C++ `fugashi` sur Win/Py3.13) |
+| **#16** | **Fish Speech v1.4** | Open Weights     | Fish Audio            | [fishaudio/fish-speech](https://github.com/fishaudio/fish-speech)     | ✅ Oui            | **Bloqué** (GPU VRAM 8+ GB requis)                   |
+| **#17** | **GPT-SoVITS**       | Open Weights     | RVC-Boss              | [RVC-Boss/GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS)         | ⚠️ Communautaire  | **Bloqué** (GPU requis + interface lourde)           |
+| **#18** | **WhisperSpeech**    | Open Weights     | Collabora             | [collabora/WhisperSpeech](https://github.com/collabora/WhisperSpeech) | ✅ Oui            | **Bloqué** (GPU CUDA fortement requis)               |
+| **#19** | **CosyVoice 2.0**    | Open Weights     | Alibaba FunASR        | [FunAudioLLM/CosyVoice](https://github.com/FunAudioLLM/CosyVoice)     | ✅ Oui            | **Bloqué** (GPU VRAM 8-12 GB requis)                 |
+| **#20** | **Parler TTS Large** | Open Weights     | Hugging Face          | [huggingface/parler-tts](https://github.com/huggingface/parler-tts)   | ✅ Oui            | **Bloqué** (GPU requis + trop lourd sur CPU)         |
+| **#21** | **Parler TTS**       | Open Weights     | Hugging Face          | [huggingface/parler-tts](https://github.com/huggingface/parler-tts)   | ✅ Oui            | **Bloqué** (GPU requis)                              |
+| **#22** | **Vokan TTS**        | Open Weights     | ShoukanLabs           | [shoukanlabs/Vokan](https://huggingface.co/shoukanlabs/Vokan)         | ❌ Anglais        | **Bloqué** (StyleTTS2 fine-tune, anglais uniquement) |
+| **#23** | **OpenVoice V2**     | Open Weights     | MyShell.ai            | [myshell-ai/OpenVoice](https://github.com/myshell-ai/OpenVoice)       | ⚠️ Via Melo       | **Bloqué** (Mêmes dépendances C++ `fugashi`)         |
+| **#24** | **VoiceCraft 2.0**   | Open Weights     | UT Austin             | [jasonppy/VoiceCraft](https://github.com/jasonppy/VoiceCraft)         | ❌ Anglais        | **Bloqué** (Anglais natif, VRAM 16 GB+ requis)       |
+| **#25** | **Pheme**            | Open Weights     | Stability AI          | [Pheme](https://github.com/jasonboesch/VoiceCraft)                    | ❌ Anglais        | **Bloqué** (Anglais uniquement, stade recherche)     |
 
 ---
 

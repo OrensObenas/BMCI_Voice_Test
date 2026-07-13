@@ -8,16 +8,16 @@ Ce rapport présente l'évaluation comparative des modèles de synthèse vocale 
 
 Le classement ci-dessous est trié par le score **MOS** (Mean Opinion Score, évalué par UTMOS). Un score plus élevé indique une voix plus naturelle et humaine.
 
-| Rang | Modèle | Tier | MOS (1-5) | Latence (s) | RTF | WER (%) | CER (%) | TTFA (s) |
-| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 🥇 | **Hume AI** | API | **4.03** | 1.97 s | 0.535 | 38.1% | 15.6% | 1.94 s |
-| 🥈 | **F5-TTS** | Local | **3.79** | 127.91 s | 37.435 | 90.8% | 46.8% | 127.91 s |
-| 🥉 | **Mistral Voxtral** | API | **3.78** | 1.57 s | 0.363 | 16.5% | 8.0% | 1.44 s |
-| #4 | **Edge-TTS** | API | 3.61 | 0.70 s | 0.124 | **11.5%** | 7.1% | 0.47 s |
-| #5 | **Kokoro v0.19** | Local | 3.56 | 3.03 s | 0.700 | 31.5% | 13.8% | 3.03 s |
-| #6 | **Google TTS** | API | 3.53 | **0.46 s** | **0.090** | **11.5%** | 7.1% | **0.46 s** |
-| #7 | **ElevenLabs** | API | 3.45 | 1.96 s | 0.526 | **11.5%** | 7.1% | 1.88 s |
-| #8 | **MeloTTS** | Local | 3.17 | 7.98 s | 2.008 | 26.5% | 11.1% | 7.98 s |
+| Rang | Modèle              | Tier  | MOS (1-5) | Latence (s) | RTF       | WER (%)   | CER (%) | TTFA (s)   |
+| :----:| :--------------------| :-----:| :---------:| :-----------:| :---------:| :---------:| :-------:| :----------:|
+| 🥇　 | **Hume AI**         | API   | **4.03**  | 1.97 s      | 0.535     | 38.1%     | 15.6%   | 1.94 s     |
+| 🥈　 | **F5-TTS**          | Local | **3.79**  | 127.91 s    | 37.435    | 90.8%     | 46.8%   | 127.91 s   |
+| 🥉　 | **Mistral Voxtral** | API   | **3.78**  | 1.57 s      | 0.363     | 16.5%     | 8.0%    | 1.44 s     |
+| #4　 | **Edge-TTS**        | API   | 3.61      | 0.70 s      | 0.124     | **11.5%** | 7.1%    | 0.47 s     |
+| #5　 | **Kokoro v0.19**    | Local | 3.56      | 3.03 s      | 0.700     | 31.5%     | 13.8%   | 3.03 s     |
+| #6　 | **Google TTS**      | API   | 3.53      | **0.46 s**  | **0.090** | **11.5%** | 7.1%    | **0.46 s** |
+| #7　 | **ElevenLabs**      | API   | 3.45      | 1.96 s      | 0.526     | **11.5%** | 7.1%    | 1.88 s     |
+| #8　 | **MeloTTS**         | Local | 3.17      | 7.98 s      | 2.008     | 26.5%     | 11.1%   | 7.98 s     |
 
 > **RTF** (Real-Time Factor) : Inférieur à 1.0 signifie que le modèle génère l'audio plus rapidement que sa vitesse de lecture réelle.
 
