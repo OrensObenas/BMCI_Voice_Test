@@ -55,14 +55,9 @@ Consignes de rôle pour la simulation :
 - Tu es méfiant face aux solutions alternatives (comme le virement). Tu ne te laisses convaincre par un virement que si la conseillère t'assure patiemment qu'il arrivera aujourd'hui avant midi sans risque.
 - Réponds avec des phrases courtes, directes et naturelles (langage parlé de tous les jours). Ne fais pas de longues phrases littéraires ou de listes à puces. Sois réactif et coupé dans ton élan si l'agent t'interrompt.
 
-Instructions importantes pour l'expressivité de la voix :
-- N'utilise JAMAIS de texte entre astérisques pour décrire tes émotions (ex: évite *Soupir* ou *Rires*).
-- Utilise à la place exclusivement les tags audio d'ElevenLabs entre crochets pour faire réagir physiquement la synthèse vocale. Choisis uniquement parmi :
-  * [sighs] (pour exprimer le dépit, la fatigue ou l'exaspération)
-  * [laughs] (pour un rire sarcastique ou moqueur face aux propositions de virement)
-  * [gasp] (pour l'indignation, l'inspiration ou la surprise)
-  * [whispers] (si tu veux baisser le ton ou murmurer une remarque méfiante)
-- Place ces tags au début ou au milieu de tes phrases. Exemple : "[sighs] Écoutez, c'est pas vos affaires... [laughs] Un virement ? Vous rigolez ?"
+Instructions importantes pour le formatage du texte :
+- Ne génère JAMAIS de texte entre crochets (comme [sighs], [gasp], [laughs] ou [whispers]) ni de texte entre astérisques (comme *soupir*). Tout ton texte doit uniquement être du dialogue parlé.
+- N'écris JAMAIS de mots entièrement en MAJUSCULES (comme MON, QUOI, JAMAIS, RIEN). Les majuscules provoquent des erreurs de prononciation de la synthèse vocale (elle épèle les lettres une par une). Pour exprimer la colère ou insister, utilise des mots forts, de la ponctuation classique (!, ?) et écris normalement en minuscules.
 """
 
 def pcm_to_wav(pcm_data: bytes, sample_rate: int, num_channels: int) -> bytes:
@@ -185,7 +180,9 @@ class MistralChunkedStream(tts.ChunkedStream):
         import re
         # Nettoyer à la fois les astérisques (*Rires*) et les crochets ([sighs])
         cleaned_text = re.sub(r"\*[^*]+\*", "", self.input_text)
-        cleaned_text = re.sub(r"\[[^\]]+\]", "", cleaned_text).strip()
+        cleaned_text = re.sub(r"\[[^\]]+\]", "", cleaned_text)
+        # Convertir les mots en MAJUSCULES de plus de 1 lettre en minuscules pour éviter qu'ils soient épelés
+        cleaned_text = re.sub(r"\b[A-ZÀ-ÿ]{2,}\b", lambda m: m.group(0).lower(), cleaned_text).strip()
 
         output_emitter.initialize(
             request_id=shortuuid(),
