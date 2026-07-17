@@ -1,137 +1,149 @@
-# 🎙️ Rapport d'Activité & de Recherche : Agent Vocal Interactif Temps Réel (LiveKit)
+# 🎙️ Rapport d'Activité Final : Plateforme de Simulation Bancaire BMCI & Agent Vocal Temps Réel (LiveKit)
 
-Ce rapport d'activité présente de manière exhaustive les travaux d'expérimentation, de benchmark et de développement d'un agent vocal conversationnel en temps réel. Ce projet simule un scénario d'évaluation et de négociation bancaire pour **Atlas Bank**.
+Ce rapport d'activité retrace de manière exhaustive et structurée l'ensemble des travaux de recherche, de développement et d'expérimentation menés pour concevoir une plateforme de simulation bancaire interactive et un agent vocal temps réel pour la **BMCI**.
 
 ---
 
 ## 📅 Table des Matières
-1. [Objectifs & Contexte de la Simulation](#1-objectifs--contexte-de-la-simulation)
-2. [La Réalité Pratique : Contraintes Matérielles & Pivot Local vs. Cloud](#2-la-réalité-pratique--contraintes-matérielles--pivot-local-vs-cloud)
-3. [Architecture Technique & Pipeline de Modèles](#3-architecture-technique--pipeline-de-modèles)
-4. [Résultats des Expérimentations (Benchmarks)](#4-résultats-des-expérimentations-benchmarks)
-5. [Limites Techniques & Solutions Trouvées (LiveKit)](#5-limites-techniques--solutions-trouvées-livekit)
-6. [Améliorations Proposées & Perspectives d'Évolution](#6-améliorations-proposées--perspectives-dévolution)
+1. [Objectifs Généraux & Contexte](#1-objectifs-généraux--contexte)
+2. [Phase 1 : Plateforme de Simulation BMCI & Fine-Tuning de LLMs Locaux](#2-phase-1--plateforme-de-simulation-bmci--fine-tuning-de-llms-locaux)
+3. [Phase 2 : Évaluation des Modèles & Sécurité (Framework & Guardrails)](#3-phase-2--évaluation-des-modèles--sécurité-framework--guardrails)
+4. [Phase 3 : Intégration Voix Temps Réel (LiveKit & WebRTC)](#4-phase-3--intégration-voix-temps-réel-livekit--webrtc)
+5. [Difficultés Pratiques & Matérielles Surmontées](#5-difficultés-pratiques--matérielles-surmontées)
+6. [L'Évolution Speech-to-Speech : Analyse des Contraintes de Moshi (Kyutai)](#6-lévolution-speech-to-speech--analyse-des-contraintes-de-moshi-kyutai)
+7. [Bilan, État Actuel & Prochaines Étapes](#7-bilan-état-actuel--prochaines-étapes)
 
 ---
 
-## 1. Objectifs & Contexte de la Simulation
+## 1. Objectifs Généraux & Contexte
 
-L'objectif principal du projet est de concevoir un **agent conversationnel vocal intelligent** capable de simuler un client bancaire mécontent (**M. Orens**) dans le cadre de formations internes pour les conseillers d'**Atlas Bank**.
-
-### 🎭 Le Scénario de Simulation :
-* **Le Personnage** : M. Orens, client fidèle de la banque, se présente en agence pour retirer immédiatement **100 000 dirhams en espèces** afin d'acheter une maison aujourd'hui avant midi.
-* **Le Conflit** : La conseillère (jouée par l'utilisateur) l'informe que la limite de retrait immédiat en espèces est fixée à **50 000 dirhams par jour** pour des raisons de sécurité.
-* **Les Exigences de Réalisme** :
-  * **Latence minimale** : Le temps de réponse doit être inférieur à **1,5 seconde** pour éviter les silences gênants.
-  * **Intonation émotionnelle** : La voix du client doit refléter l'énervement, la colère et l'impatience.
-  * **Barge-in (Interruption)** : L'agent doit s'interrompre instantanément dès que l'utilisateur commence à lui parler.
+Le projet a évolué d'une simple étude de modèles à la création d'une **plateforme de simulation bancaire pour la BMCI**. 
+L'objectif est d'entraîner et d'évaluer des modèles d'intelligence artificielle pour qu'ils incarnent le rôle strict d'un client bancaire (ex: **M. Orens**, client pressé et mécontent) dans des conversations de formation avec un conseiller (l'utilisateur apprenant).
 
 ---
 
-## 2. La Réalité Pratique : Contraintes Matérielles & Pivot Local vs. Cloud
+## 2. Phase 1 : Plateforme de Simulation BMCI & Fine-Tuning de LLMs Locaux
 
-La première phase du projet a été marquée par une confrontation directe avec les limites physiques de la machine de développement (ordinateur portable standard, sans GPU Nvidia haut de gamme ou ressources VRAM dédiées).
+### A. Création du Dataset Bancaire Français
+Pour adapter les modèles au contexte métier de la BMCI et leur apprendre à se comporter comme des clients réalistes, nous avons constitué un **jeu de données (dataset) fictif bancaire en français**. Ce dataset couvre 9 scénarios clés de la vie courante en agence :
+1. Carte bancaire bloquée.
+2. Virement en retard.
+3. Application mobile bloquée.
+4. Frais bancaires injustifiés.
+5. Demandes de crédit.
+6. Ouverture de compte.
+7. Encaissement / Problèmes de chèque.
+8. Augmentation de plafond de carte.
+9. Contestation d'opération frauduleuse.
 
-### ❌ A. L'Impasse du Local (Entraînement et Inférence CPU)
-1. **Impossible d'entraîner ou de Fine-Tuner les modèles** :
-   * L'entraînement de modèles de voix (comme F5-TTS) ou de modèles de transcription (Whisper) requiert des dizaines de gigaoctets de mémoire vidéo (VRAM) et des calculs matriciels intenses (GPU Nvidia CUDA).
-   * Sur un ordinateur grand public exécutant sur processeur (CPU), lancer un tel entraînement aurait pris plusieurs mois et aurait saturé instantanément la mémoire vive (RAM), causant des plantages constants du système.
-2. **Inférence trop lente pour le temps réel** :
-   * Lors des tests avec **F5-TTS** hébergé localement sur la machine, la génération d'un audio de **3 secondes** a nécessité **128 secondes** de calcul CPU. Le Real-Time Factor (RTF) était de **37.4** (37 fois plus lent que le temps réel), rendant la conversation impossible.
-   * Même pour la reconnaissance vocale, **Whisper Large-Turbo** en local mettait plus de **2 minutes** à transcrire un fichier audio de 3 minutes.
+### B. Fine-Tuning LoRA de Modèles Légers
+Pour exécuter l'agent en local sur des machines standard, nous avons testé le fine-tuning léger via la méthode **LoRA** (Low-Rank Adaptation) sur plusieurs architectures de petits modèles :
+* **Modèles testés** : *Qwen (0.5B/1.5B)*, *SmolLM2*, *TinyLlama*, *BloomZ* et *CroissantLLM*.
+* **Résultat de l'entraînement** : Le modèle le plus stable et exploitable localement à ce jour est **`Qwen2.5-0.5B-BMCI-Client-Finetune-1`**. Il démontre une bonne assimilation des cas d'usage bancaires malgré sa taille réduite.
 
-### 🔌 B. Le Pivot Stratégique vers les APIs Cloud
-Devant cette barrière matérielle, la stratégie a pivoté vers l'utilisation d'**APIs cloud managées** (Mistral, Cohere, ElevenLabs, Hume AI). 
-Ce choix a permis de :
-* Déporter la puissance de calcul sur des serveurs distants équipés de cartes graphiques professionnelles (H100/A100).
-* Bénéficier de modèles d'une qualité inégalée (ex: les modèles d'intonation de Hume AI).
-* Réduire la latence de calcul à moins d'une seconde, malgré l'aller-retour réseau.
-
----
-
-## 3. Architecture Technique & Pipeline de Modèles
-
-L'agent vocal est développé sous forme de **Worker LiveKit** s'appuyant sur le protocole WebRTC. Son architecture modulaire est découpée en quatre couches :
-
-```mermaid
-graph TD
-    A[Microphone Utilisateur] -->|Audio Temps Réel| B(VAD: Silero VAD local)
-    B -->|Segments de Voix| C(STT: Cohere Transcribe v2)
-    C -->|Texte Transcrit| D(LLM: Mistral small-latest)
-    D -->|Texte + Émotions| E(Filtre de Tags & Ponctuation)
-    E -->|Texte Nettoyé| F(TTS: Mistral Voxtral)
-    F -->|Audio Synthétisé| G[Haut-parleurs Utilisateur]
-    
-    style B fill:#f9f,stroke:#333,stroke-width:2px
-    style C fill:#bbf,stroke:#333,stroke-width:2px
-    style D fill:#dfd,stroke:#333,stroke-width:2px
-    style F fill:#fdd,stroke:#333,stroke-width:2px
-```
-
-* **VAD (Voice Activity Detection)** : Détecteur local ultra-léger (Silero VAD) pour repérer quand l'utilisateur commence et arrête de parler sans consommer de CPU.
-* **STT (Speech-to-Text)** : Transcription de la parole en texte via l'API **Cohere Transcribe v2**.
-* **LLM (Large Language Model)** : Génération des réponses du client outré par l'API **Mistral** (`mistral-small-latest`).
-* **TTS (Text-to-Speech)** : Synthèse vocale de la réponse via l'API **Mistral Voxtral** (voix de colère native `fr_marie_angry`).
+### C. Adaptation de l'Application Streamlit
+L'interface de démonstration sous Streamlit a été entièrement refondue pour intégrer :
+* **Gestion locale** : Chargement direct des modèles français et des checkpoints fine-tunés locaux.
+* **Flexibilité des données** : Prise en charge automatique des formats de datasets locaux (`.json`, `.jsonl`, `.csv`).
+* **Nouvel onglet "Chat Client BMCI"** : Interface de dialogue direct pour tester le comportement de jeu de rôle.
+* **Garde-fous intégrés (Guardrails)** : Filtres automatiques bloquant les réponses où le modèle oublie son rôle et commence à se prendre pour le conseiller bancaire.
+* **Sécurisation de la mémoire** : Blocage automatique des modèles trop lourds (ex : *Mistral 7B* en local) pour éviter les saturations de RAM/VRAM et les crashs de l'application.
 
 ---
 
-## 4. Résultats des Expérimentations (Benchmarks)
+## 3. Phase 2 : Évaluation des Modèles & Sécurité (Framework & Guardrails)
 
-Un double benchmark quantitatif et qualitatif a été mené sur les modèles pour valider nos choix.
+Nous avons mis en place un framework d'évaluation automatisé rigoureux, inspiré des meilleures pratiques de la recherche :
 
-### 📊 A. Synthèse Vocale (TTS)
-Évaluation sur le naturel vocal (**MOS** via UTMOS, échelle de 1 à 5) et la vitesse d'exécution (**RTF**).
-
-| Modèle | Type | MOS (1-5) | Latence moyenne | RTF | Particularités |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **Hume AI** | API | **4.03** | 1.97 s | 0.535 | Voix Benjamin : Meilleur naturel, mais fort risque de blocages (erreurs 429). |
-| **Mistral Voxtral** | API | **3.78** | **1.57 s** | **0.363** | **Voix choisie (Marie angry)** : Colère native et excellente stabilité. |
-| **F5-TTS** | Local | **3.79** | 127.91 s | 37.435 | **Inutilisable** en local sans GPU (trop lent). |
-| **Google TTS** | API | 3.53 | **0.46 s** | **0.090** | Ultra-rapide mais intonation trop neutre (robotique). |
-
-### 📊 B. Reconnaissance Vocale (STT)
-Test sur des enregistrements réels issus de plusieurs microphones (Casque, Téléphone, PC).
-
-| Modèle STT | WER (%) | CER (%) | Latence moyenne | RTF | Observations |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **Cohere Transcribe v2** | **5.82%** | **3.70%** | **5.43 s** | **0.031** | **Sélectionné** : Le plus équilibré et rapide. |
-| **ElevenLabs Scribe v2** | **3.12%** | **2.19%** | 21.02 s | 0.122 | Trop de latence pour le direct. |
-| **Whisper Large-Turbo (Local)** | **6.03%** | **3.93%** | 132.91 s | 0.770 | Trop gourmand pour la machine locale. |
+* **Scénarios multi-modèles (approche Promptfoo)** : Comparaison simultanée de plusieurs modèles face aux mêmes invites (prompts).
+* **Cas Red-Team (Tests de Robustesse)** : Attaques verbales simulées pour tenter de faire sortir le modèle de son rôle de client.
+* **Scoring applicatif (approche DeepEval / G-Eval)** : Évaluation automatique de la qualité des réponses à l'aide de critères LLM-as-a-judge.
+* **Mesure de fidélité (proxy RAGAS)** : Analyse de la cohérence de la réponse vis-à-vis du contexte de la conversation.
+* **Métriques clés mesurées** :
+  * Respect du rôle (L'IA reste-t-elle le client ?).
+  * Pertinence de la réponse métier.
+  * Sécurité (Non-divulgation d'informations sensibles).
+  * Taux d'hallucination et concision.
+  * Déclarations non supportées (claims non fondés).
 
 ---
 
-## 5. Limites Techniques & Solutions Trouvées (LiveKit)
+## 4. Phase 3 : Intégration Voix Temps Réel (LiveKit & WebRTC)
 
-Durant la mise en œuvre pratique de l'agent vocal interactif sur LiveKit, plusieurs limites techniques bloquantes sont apparues. Voici comment nous les avons résolues :
+Pour transformer cette simulation en expérience vocale en direct, nous avons connecté les modèles à un flux audio temps réel via **LiveKit**.
 
-### 🛠️ A. Le Panic WebRTC sous Windows
-* **Limite** : L'échantillonnage de paquets audio sous Windows créait des conflits avec la bibliothèque Rust native `webrtc-sys` lors des déconnexions, ce qui provoquait un crash complet de l'application.
-* **Solution** : Utilisation des modules d'intégration de LiveKit gérant l'audio de manière native, évitant ainsi le recours à des scripts d'échantillonnage manuel instables.
-
-### 🔄 B. Déconnexion brutale du Playground (L'Agent s'arrête)
-* **Limite** : Dès qu'un utilisateur quitte le Playground web de LiveKit, la connexion WebRTC se rompt et coupe le thread Python principal, obligeant à relancer le script à la main dans le terminal.
-* **Solution** : Création d'un script de supervision ([run_agent.py](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/run_agent.py)) qui encapsule le worker. S'il détecte un arrêt ou une erreur, il tue les processus résiduels et relance l'agent proprement en moins de 2 secondes.
-
-### 🎭 C. DIDASCALIES Vocales (L'IA lit les tags d'émotion)
-* **Limite** : Pour exprimer des émotions, le LLM génère des indicateurs textuels (comme `*Soupir*` ou `[sighs]`). Le TTS classique tente de lire ces mots à haute voix.
-* **Solution** : Écriture d'un adaptateur de nettoyage (`CustomHumeTTS` / `CustomElevenLabsTTS`) utilisant des regex pour filtrer les astérisques et crochets avant envoi au TTS. L'utilisateur voit l'émotion écrite sur son écran, mais la voix ne la lit pas et reste fluide.
-
-### ⏱️ D. Latence de Transcription et Interruption prématurée
-* **Limite** : La transcription cloud du STT (Cohere) arrivant avec un léger différé, le détecteur de silence coupait la parole de l'utilisateur trop tôt pour répondre à une phrase incomplète.
-* **Solution** : Configuration de `TurnHandlingOptions` dans [agent.py](file:///C:/Users/user/.gemini/antigravity/scratch/tts-benchmark/agent.py) avec un délai de silence minimal fixe de **0,8 seconde** (`min_delay=0.8`). Cela laisse le temps à la transcription d'arriver au complet avant que l'agent ne prenne la parole.
-
-### 🛑 E. Limite de requêtes API (Erreur HTTP 429)
-* **Limite** : Lors de dialogues intenses avec Hume AI, l'agent dépassait les quotas gratuits et crashait sur une erreur `Too Many Requests`.
-* **Solution 1 (Période d'essai)** : Écriture d'un système de bascule automatique (`FallbackChunkedStream`). Si l'API Hume AI retournait une erreur 429, l'agent basculait instantanément et de manière invisible sur l'API de secours Mistral Voxtral (Marie en colère) pour prononcer la phrase, évitant tout crash.
-* **Solution 2 (Production)** : Rebasculement complet et propre sur l'API **Mistral Voxtral** (Marie en colère) pour éliminer les coûts et s'assurer d'une stabilité à 100%.
+* **STT (Reconnaissance Vocale)** : Utilisation de **Cohere Transcribe v2**. Très robuste pour transcrire fidèlement le français malgré le bruit de fond d'une agence.
+* **LLM (Cerveau)** : **Mistral (`mistral-small-latest`)** via l'adaptateur OpenAI pour une intelligence fluide.
+* **TTS (Synthèse Vocale)** : **Mistral Voxtral** avec la voix nativement irritée de Marie (`fr_marie_angry`) pour incarner la frustration de M. Orens.
+* **Ajustements de fluidité** :
+  * **Nettoyage textuel automatique** : Un filtre de remplacement Regex retire les majuscules d'insistance (`MON` ➔ `mon`) et les didascalies entre crochets (`[gasp]`) pour éviter que la synthèse vocale ne les épelle à haute voix, tout en les gardant affichés dans la console.
+  * **Optimisation VAD (`min_delay=0.8`)** : Une attente de silence de 0,8s configurée pour s'assurer que la transcription complète soit reçue avant que l'IA ne prenne la parole, évitant de couper l'utilisateur.
 
 ---
 
-## 6. Améliorations Proposées & Perspectives d'Évolution
+## 5. Difficultés Pratiques & Matérielles Surmontées
 
-Pour passer à l'échelle industrielle et atteindre une réactivité quasi-instantanée (~300ms de latence) :
+### 🧠 A. Respect du Rôle (Le modèle se prend pour le conseiller)
+* *Difficulté* : Les petits modèles (0.5B à 3B) ont tendance à oublier qu'ils jouent le client et se mettent à répondre à la place du conseiller.
+* *Solution* : Renforcement des prompts système avec des instructions de formatage strictes, ajout d'exemples *few-shot* d'échanges types, et intégration de filtres de blocage post-génération.
 
-* **Migration vers le Speech-to-Speech natif (S2S)** :
-  Utiliser les APIs de dernière génération **OpenAI Realtime** ou **Gemini Multimodal Live**. Ces modèles reçoivent directement la voix et répondent par la voix sans passer par les étapes intermédiaires (STT/LLM/TTS), ramenant la latence à celle d'une vraie conversation humaine.
-* **Architecture Locale sur Serveur Dédié (GPU)** :
-  Déployer sur un serveur cloud privé muni de cartes graphiques (ex: RunPod, AWS) des modèles d'inférence rapides et gratuits comme **Whisper-Faster** (pour le STT) et **Llama-3-8B** ou **Mistral-7B** (pour le LLM via vLLM), ce qui annulerait les abonnements payants tout en gardant une vitesse maximale.
+### 📉 B. Dérives Contextuelles lors du Fine-Tuning
+* *Difficulté* : Bien que le modèle fine-tuné comprenne son rôle de client, il dérive parfois du contexte précis (ex: parler de carte bloquée alors que le scénario traite d'un virement en retard).
+* *Solution* : Nécessité d'élargir le dataset de fine-tuning avec plus d'exemples ciblés et des cas d'auto-correction.
+
+### 💻 C. Limitations Matérielles en Local (GPU Intel vs. Nvidia)
+* *Difficulté* : Impossibilité d'entraîner les modèles en local sous Windows (le processeur graphique Intel intégré n'étant pas compatible avec CUDA). Les modèles lourds (Mistral 7B) faisaient crasher la mémoire Streamlit.
+* *Solution* : Déportation de toute la phase d'entraînement sur des environnements cloud gratuits (**Google Colab** et **Kaggle**) et blocage préventif des modèles de plus de 3B paramètres en local.
+
+### 💾 D. Problèmes d'Espace Disque et de Checkpoints sur Colab/Kaggle
+* *Difficulté* : Les sessions d'entraînement sur Colab/Kaggle s'interrompaient brusquement en raison de manques d'espace disque ou de déconnexions, perdant tous les checkpoints.
+* *Solution* : Implémentation d'une sauvegarde régulière des checkpoints vers Google Drive / Kaggle Dataset et ajout d'un script de reprise automatique de l'entraînement à partir du dernier checkpoint enregistré.
+
+### 📦 E. Conflits de Dépendances Python
+* *Difficulté* : Incompatibilités fréquentes de versions entre `transformers`, `peft`, `torch`, `torchao` et les environnements hôtes (Windows vs. Linux Colab). Certaines fonctions d'évaluation (comme `evaluation_strategy`) plantaient le code.
+* *Solution* : Écriture de scripts d'installation robustes et écriture de wrappers adaptatifs selon la version de la bibliothèque détectée.
+
+---
+
+## 6. L'Évolution Speech-to-Speech : Analyse des Contraintes de Moshi (Kyutai)
+
+Pour atteindre une réactivité ultime, l'intégration de modèles Speech-to-Speech natifs (comme **Moshi** développé par Kyutai) a été analysée. Bien que cette technologie élimine la cascade STT➔LLM➔TTS pour descendre sous les **200ms de latence**, elle impose 6 barrières techniques majeures :
+
+### 1. La lourdeur de l'infrastructure matérielle (GPU requis)
+* *Contrainte* : Moshi ne peut pas tourner sur un processeur classique (CPU). Le modèle complet (Helium 7B + Mimi) requiert au minimum **16 à 24 Go de mémoire vidéo (VRAM) dédiée et rapide**.
+* *Impact* : Obligation de louer en production des serveurs cloud équipés de cartes professionnelles (NVIDIA A10G, A100 ou H100), représentant un coût mensuel fixe très élevé.
+
+### 2. Le développement de la couche de transport audio (WebSockets / WebRTC)
+* *Contrainte* : Moshi est livré sous forme de code d'inférence brut. Il ne fournit pas de solution client-serveur prête à l'emploi.
+* *Impact* : Nécessité de développer de toutes pièces la couche de transport : capture du micro utilisateur, compression via le codec *Mimi*, envoi WebSocket, et gestion de la gigue réseau (Jitter Buffer) pour éviter les saccades audio.
+
+### 3. La gestion complexe de la détection de parole (VAD) et des interruptions
+* *Contrainte* : Pour qu'un dialogue soit réaliste, l'utilisateur doit pouvoir couper la parole à Moshi.
+* *Impact* : Obligation de coder un système de purge de flux audio. Dès que l'utilisateur commence à parler, un signal d'interruption doit instantanément vider les buffers du serveur de génération pour que l'IA se taise sur le champ.
+
+### 4. L'absence de support natif pour Windows
+* *Contrainte* : Kyutai a optimisé Moshi exclusivement pour Linux et macOS.
+* *Impact* : Pour le développement local sous Windows, il est obligatoire de passer par WSL2 (Windows Subsystem for Linux) et de configurer manuellement le partage des ressources GPU, ce qui ajoute de la complexité et des latences de traitement audio.
+
+### 5. L'interfaçage avec le réseau téléphonique (VoIP / SIP)
+* *Contrainte* : Moshi n'intègre aucune passerelle de télécommunication native.
+* *Impact* : Si les apprenants doivent appeler l'IA depuis un téléphone ou un standard de centre d'appels, il faut développer une passerelle complexe SIP/WebRTC pour convertir les flux RTC classiques vers le codec Mimi de Moshi.
+
+### 6. L'intégration de la logique métier (Function Calling)
+* *Contrainte* : Moshi génère un flux de parole brut sans capacité native d'interroger des bases de données.
+* *Impact* : Nécessité de développer un intercepteur de "monologue intérieur" (le texte généré par l'IA en parallèle de sa voix). Si l'intention d'effectuer une action (ex: bloquer une carte) est détectée, le système doit mettre en pause l'audio, interroger l'API bancaire de la BMCI, puis réinjecter le résultat sous forme de contexte textuel.
+
+---
+
+## 7. Bilan, État Actuel & Prochaines Étapes
+
+### 🎯 État Actuel du Projet :
+* Un **dataset bancaire BMCI** solide et complet.
+* Un **modèle Qwen fine-tuné** (`Qwen2.5-0.5B-BMCI-Client-Finetune-1`) opérationnel localement.
+* Une interface **Streamlit** fonctionnelle intégrant le chat, l'évaluation et des guardrails.
+* Un **agent vocal en direct sur LiveKit** avec voix en colère stable (Marie) et résilience automatique (superviseur).
+
+### 🚀 Prochaines Étapes d'Amélioration :
+1. **Enrichissement du Dataset de Fine-Tuning** : Ajouter des exemples pour apprendre au modèle à résister aux pièges du conseiller, refuser les données confidentielles (sécurité), et ne pas inventer de faux détails bancaires.
+2. **Optimisation des Checkpoints** : Augmenter le nombre d'époques d'entraînement sur Kaggle/Colab en stabilisant les exports automatiques de checkpoints.
+3. **Étude de Faisabilité de Moshi / S2S** : Évaluer l'opportunité d'investir dans une infrastructure cloud GPU pour tester Moshi en environnement réel.
