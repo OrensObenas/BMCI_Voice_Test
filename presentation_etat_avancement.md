@@ -1,110 +1,106 @@
-# 🎙️ Présentation d'Avancement : Agent Vocal Interactif (LiveKit)
+# 🎙️ Présentation d'Avancement : Plateforme BMCI & Agent Vocal Temps Réel
 
 ---
 
 ## 📌 Diapositive 1 : Page de Garde
-### **Simulation d'un Client Bancaire par Agent Vocal Interactif**
-*Bilan des Travaux, Expérimentations et Perspectives d'Évolution*
+### **Simulation de Client Bancaire par IA**
+*Plateforme de Fine-Tuning BMCI & Agent Vocal Interactif Temps Réel*
 
-* **Contexte** : Stage de Recherche & Développement - **Atlas Bank**
-* **Objectif** : Créer un agent de simulation de négociation commerciale réaliste.
-* **Technologie principale** : LiveKit WebRTC, APIs Cloud & Modèles Locaux.
+* **Auteur** : Stagiaire R&D - **BMCI**
+* **Objectif** : Concevoir une plateforme d'entraînement et d'évaluation des modèles pour le rôle de client bancaire en colère.
+* **Architecture** : Modèles locaux fine-tunés, Interface Streamlit, LiveKit WebRTC.
 
 ---
 
 ## 📌 Diapositive 2 : Le Cas d'Usage de la Simulation
-### **Scénario "M. Orens" (Le Client Mécontent)**
-* **Le Rôle de l'IA** : Incarner M. Orens, un client pressé et énervé qui exige de retirer immédiatement **100 000 dirhams en espèces** pour finaliser l'achat d'une maison.
-* **Le Défi pour le Conseiller (l'apprenant)** : Faire face à la colère, proposer des alternatives (comme le virement rapide) tout en respectant la limite de sécurité réglementaire de **50 000 dirhams par jour**.
-* **Contraintes Techniques** :
-  * Voix expriment la colère et la frustration.
-  * Latence inférieure à 1,5 seconde.
-  * Possibilité de couper la parole de l'agent (Full-Duplex / Barge-in).
+### **Incarner le Client Mécontent (M. Orens)**
+* **Le Scénario** : Retrait urgent de **100 000 dirhams** pour l'achat d'une maison aujourd'hui avant midi. Le conseiller annonce la limite de retrait de **50 000 DH**.
+* **Exigences Métier & Techniques** :
+  * Voix transmettant la colère et l'impatience.
+  * Barge-in : L'agent doit s'interrompre dès que l'utilisateur lui parle.
+  * Latence basse (idéalement < 1,5s).
 
 ---
 
-## 📌 Diapositive 3 : Chronologie du Projet (Début ➔ Aujourd'hui)
-### **Les Grandes Étapes du Travail Pratique**
-1. **Étape 1 : État de l'Art & Benchmarks**
-   * Recherche théorique et développement de scripts pour comparer les meilleurs modèles de voix (TTS) et d'écoute (STT) du marché.
-2. **Étape 2 : Prototypage Vocal (LiveKit)**
-   * Développement de l'architecture d'agent vocal en temps réel via WebRTC.
-3. **Étape 3 : Résilience & Optimisation**
-   * Résolution des crashs, création du superviseur automatique, nettoyage textuel et gestion fine de la détection de silence (VAD).
+## 📌 Diapositive 3 : Phase 1 - Dataset & Fine-Tuning Local
+### **Adapter les LLMs au Métier Bancaire**
+* **Création d'un Dataset Fictif BMCI** :
+  * Échanges de négociation sur 9 cas : *carte bloquée, virement en retard, appli bloquée, frais bancaires, chèque, crédit, etc.*
+* **Fine-Tuning LoRA (Low-Rank Adaptation)** :
+  * Modèles testés : *Qwen, SmolLM2, TinyLlama, BloomZ, CroissantLLM*.
+  * **Modèle local le plus exploitable** : `Qwen2.5-0.5B-BMCI-Client-Finetune-1`.
 
 ---
 
-## 📌 Diapositive 4 : État de l'Art - Sélection des Modèles
-
-### **La confrontation Local (PC) vs. APIs (Cloud)**
-* **Le Local** : Testé pour des raisons de gratuité et de confidentialité.
-  * *Constat* : Inenvisageable sur la machine de développement (CPU standard portable). L'entraînement de modèles de voix (F5-TTS) est impossible par manque de VRAM, et l'inférence prend plus de 2 minutes pour 3 secondes de voix.
-* **Le Cloud (APIs)** : Choisi comme solution pivot pour déporter la puissance de calcul.
-  * *Constat* : Temps de réponse ultra-rapides (< 1,5s) et modèles d'intonation de qualité supérieure.
-
----
-
-## 📌 Diapositive 5 : Résultats des Tests TTS (Synthèse Vocale)
-
-### **Échecs, Réussites et Choix Finaux**
-* **Hume AI (Benjamin)** :
-  * *Résultat* : **Réussite Qualitative / Échec Technique**. Voix incroyablement naturelle (MOS de 4.03), mais bloquée par des quotas d'essai stricts (erreurs HTTP 429).
-* **F5-TTS (Local)** :
-  * *Résultat* : **Échec Temps Réel**. Excellente voix, mais génère en 128 secondes pour 3 secondes de voix (RTF de 37.4).
-* **ElevenLabs (Adam)** :
-  * *Résultat* : **Réussite Modérée**. Permet de générer des rires ou soupirs, mais s'avère coûteux et présente une latence réseau sensible.
-* **Mistral Voxtral (Marie angry)** :
-  * *Résultat* : **Grande Réussite (Choix Actuel)**. Voix nativement en colère, très stable, temps de réponse court (1.57s) et quotas fiables.
+## 📌 Diapositive 4 : Phase 1 - Difficultés du Fine-Tuning Local
+### **Contraintes Techniques & Matérielles**
+* **Respect du rôle de client** : Tendance naturelle des LLMs à répondre comme conseiller ➔ Résolu par des prompts système stricts, du few-shot et des filtres post-génération.
+* **Dérives de contexte** : Perte du sujet de départ (ex: parler de crédit au lieu de virement) ➔ Nécessite d'enrichir le dataset d'exemples de recentrage.
+* **Absence de GPU local (CUDA Windows)** : Infécond d'entraîner sur CPU ➔ Bascule des calculs d'entraînement sur **Colab / Kaggle** et blocage local des modèles lourds (>3B).
+* **Checkpoints et Dépendances** : Crashs de disques Colab et conflits de packages (*transformers, peft, torch*) ➔ Logic de backup automatique sur Drive et scripts robustes.
 
 ---
 
-## 📌 Diapositive 6 : Résultats des Tests STT (Reconnaissance Vocale)
-
-### **Échecs, Réussites et Choix Finaux**
-* **ElevenLabs Scribe v2** :
-  * *Résultat* : **Échec Temps Réel**. Excellente précision (3.12% de WER), mais latence de 21 secondes.
-* **Whisper Large-Turbo (Local)** :
-  * *Résultat* : **Échec CPU**. Plus de 2 minutes de calcul pour transcrire 3 minutes de voix.
-* **Cohere Transcribe v2** :
-  * *Résultat* : **Grande Réussite (Choix Actuel)**. Transcription très précise (5.82% de WER), robuste aux bruits d'agence, et quasi-instantanée en streaming.
-
----
-
-## 📌 Diapositive 7 : L'Option LiveKit & Ses Avantages
-
-### **Pourquoi avoir choisi LiveKit pour le temps réel ?**
-* **Le Full-Duplex** : L'utilisateur et le robot peuvent se parler en continu sans appuyer sur aucun bouton (comme lors d'un vrai appel téléphonique).
-* **Le Barge-in automatique** : Dès que l'utilisateur commence à parler, l'agent interrompt sa phrase à la milliseconde près pour l'écouter.
-* **Modularité totale** : Possibilité de changer de modèle (STT, LLM, TTS) en modifiant seulement quelques lignes de code grâce à des plugins standardisés.
-* **Hébergement cloud gratuit** : Infrastructure WebRTC gérée sur LiveKit Cloud pour les tests.
+## 📌 Diapositive 5 : Phase 1 - Streamlit & Framework d'Évaluation
+### **Mesurer les Progrès Objectivement**
+* **Adaptation de l'application Streamlit** :
+  * Chargement des modèles locaux fine-tunés et des formats `.json`, `.jsonl`, `.csv`.
+  * Onglets "Chat Client BMCI" et "Évaluation".
+  * Garde-fous intégrés contre les sorties de rôle.
+* **Framework d'Évaluation Avancé** :
+  * Scénarios multi-modèles (Promptfoo) + Red-Teaming (attaques vocales).
+  * Scoring automatique G-Eval (LLM-as-a-judge) + Proxy RAGAS (Fidélité).
+  * Métriques : *respect du rôle, pertinence, sécurité, claims non supportés*.
 
 ---
 
-## 📌 Diapositive 8 : Résultats Obtenus sur LiveKit
-
-### **Les Fonctionnalités Pratiques Implémentées**
-* **Le Superviseur de Résilience (`run_agent.py`)** : Détection des déconnexions du playground et redémarrage automatique de l'agent en moins de 2 secondes.
-* **Optimisation des Tours de Parole (`min_delay=0.8`)** : Une pause fixe de 0,8s de silence configurée pour s'assurer que l'écoute (STT) reçoive la phrase en entier avant que le LLM ne réponde.
-* **Filtre anti-didacalies et anti-épellation** : Nettoyage automatique des crochets émotionnels (`[gasp]`) et conversion des mots en majuscules (`MON` ➔ `mon`) pour éviter que la voix ne les épelle lettre par lettre.
-
----
-
-## 📌 Diapositive 9 : Limites Rencontrées dans tout le Projet
-
-### **Les Goulots d'Étranglement Techniques**
-1. **Contrainte Matérielle Locale** : CPU insuffisant pour faire tourner le STT, le VAD et le TTS en local sans latence critique.
-2. **Latence cumulée en cascade** : L'enchaînement `STT (Cohere) ➔ LLM (Mistral) ➔ TTS (Voxtral)` induit un délai de 1 à 1,5s dû aux requêtes réseau successives.
-3. **Absence de streaming sur Mistral TTS** : L'agent doit attendre la génération de la phrase complète pour la lire, créant un léger temps mort.
-4. **Quotas d'APIs gratuits** : Blocages fréquents (erreurs HTTP 429) sur Hume AI et Gemini API lors des phases de tests rapides.
+## 📌 Diapositive 6 : Phase 2 - Benchmark STT (Reconnaissance Vocale)
+### **Modèle Réussi vs. Tests Non Concluants**
+* **🟢 Réussite : Cohere Transcribe v2 (Cloud)** :
+  * Taux d'erreur de mots (WER) très bas (**5.82%**), ultra-rapide en streaming, très robuste aux bruits de fond d'agence.
+* **🔴 Non Concluants / Échecs** :
+  * **ElevenLabs Scribe v2 (Cloud)** : Précision excellente (3.12% de WER), mais **latence de 21s** (inutilisable en direct).
+  * **Whisper Large-Turbo (Local)** : **Trop lourd pour le CPU** local (132s de calcul pour transcrire 3 minutes d'audio).
 
 ---
 
-## 📌 Diapositive 10 : Perspectives d'Évolution
+## 📌 Diapositive 7 : Phase 2 - Benchmark TTS (Synthèse Vocale)
+### **Modèle Réussi vs. Tests Non Concluants**
+* **🟢 Réussite : Mistral Voxtral (Voix : Marie angry)** :
+  * Colère native très convaincante, latence faible (1.57s) et quotas d'API stables.
+* **🔴 Non Concluants / Échecs** :
+  * **Hume AI (Cloud)** : Voix fantastique (MOS 4.03) mais bloquée par des quotas stricts (erreurs 429).
+  * **F5-TTS (Local)** : **Infécond en temps réel sur CPU** (128s de calcul pour 3s de voix).
+  * **Kokoro & MeloTTS (Locaux)** : Voix françaises trop robotiques, plates, et sans expressivité émotionnelle.
 
-### **Pistes pour amener le projet en production**
-* **Piste 1 : Passage au Speech-to-Speech (S2S) natif** :
-  * Intégrer les APIs *OpenAI Realtime* ou *Gemini Multimodal Live* pour éliminer la cascade (STT/LLM/TTS) et descendre sous les **400ms de latence globale** (conversation instantanée).
-* **Piste 2 : Déploiement Local sur Serveur GPU Dédié** :
-  * Héberger des modèles open-source (*Whisper-Faster* local et *Llama 3*) sur un serveur cloud GPU pour éliminer les abonnements payants tout en gardant une vitesse maximale.
-* **Piste 3 : Passage aux comptes APIs payants** :
-  * Lever les limites 429 en acquérant un plan professionnel Hume AI/ElevenLabs.
+---
+
+## 📌 Diapositive 8 : Phase 3 - Agent Vocal Temps Réel (LiveKit)
+### **Une Expérience Fluide et Résiliente**
+* **Les Atouts de LiveKit** :
+  * *Full-Duplex & Barge-in* : Conversation continue avec interruptions millisecondées dès que l'utilisateur prend la parole.
+* **Optimisations Appliquées** :
+  * *Superviseur de Résilience (`run_agent.py`)* : Auto-restart en moins de 2s lors des déconnexions WebRTC.
+  * *Gestion fine de la parole (`min_delay=0.8`)* : Attente minimale pour laisser le temps au STT de finaliser la transcription.
+  * *Filtre anti-didacalies* : Nettoyage regex automatique des crochets (`[gasp]`) et majuscules pour éviter que la voix ne les épelle.
+
+---
+
+## 📌 Diapositive 9 : L'Avenir : Analyse de l'Option Speech-to-Speech (Moshi)
+### **6 Verrous Techniques Majeurs Identifiés**
+1. **Infrastructure GPU lourde** : VRAM minimale de 16-24 Go requise, coût cloud mensuel fixe élevé (NVIDIA A100/H100).
+2. **Couche de transport audio complexe** : Nécessité de développer l'interfaçage WebSocket et la gestion de la gigue réseau (Jitter Buffer).
+3. **VAD & Interruption complexe** : Obligation de coder des purges instantanées de buffers pour couper le flux de l'IA.
+4. **Pas de support Windows natif** : Obligation d'utiliser WSL2 (complexité de partage GPU, latence audio).
+5. **Pas de passerelle VoIP/SIP** : Nécessité de ponts complexes pour relier Moshi au réseau téléphonique.
+6. **Pas de Function Calling** : Obligation d'analyser le monologue intérieur de Moshi pour déclencher des actions bancaires.
+
+---
+
+## 📌 Diapositive 10 : Bilan & Perspectives
+### **Où en sommes-nous et où allons-nous ?**
+* **État Actuel** : Dataset BMCI prêt, modèle Qwen fine-tuné et testé en local, interface Streamlit de chat et d'évaluation stable, agent vocal fonctionnel sur LiveKit Cloud.
+* **Prochaines Étapes** :
+  1. Enrichir le dataset de fine-tuning (sécurité, résistance aux pièges, respect du contexte).
+  2. Stabiliser les entraînements de modèles sur Kaggle/Colab.
+  3. Étudier la viabilité économique d'un serveur cloud GPU pour basculer sur des modèles natifs Speech-to-Speech.
