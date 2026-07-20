@@ -265,12 +265,12 @@ async def entrypoint(ctx: JobContext):
         vad=inference.VAD()
     )
 
-    # Configuration du LLM Mistral via l'adaptateur OpenAI
-    logger.info("Configuration du LLM Mistral (mistral-small-latest)...")
+    # Configuration du LLM local (SLM Qwen 0.5B fine-tuné) via l'adaptateur OpenAI
+    logger.info("Configuration du LLM local (Qwen 0.5B BMCI)...")
     llm_plugin = openai.LLM(
-        model="mistral-small-latest",
-        base_url="https://api.mistral.ai/v1",
-        api_key=os.getenv("MISTRAL_API_KEY")
+        model="local-model",
+        base_url="http://127.0.0.1:8000/v1",
+        api_key="local"
     )
 
     # Configuration du TTS Mistral (voix Marie en colère 'fr_marie_angry')
