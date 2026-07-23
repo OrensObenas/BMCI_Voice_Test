@@ -1,18 +1,18 @@
 import os
 import json
+import re
 import asyncio
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
-from threading import Thread
 
 app = FastAPI()
 
-# Configuration des chemins locaux pour le modèle Qwen BMCI
-adapter_path = r"C:\Users\user\bmci-model-comparator-internship\Qwen model fine tune 1\fine_tuned\bmci_client__qwen2_5_0_5b_fr\final"
-base_model_name = "Qwen/Qwen2.5-0.5B-Instruct"
+# Configuration des chemins locaux pour le modèle TinyLlama 1.1B BMCI
+adapter_path = r"C:\Users\user\bmci-model-comparator-internship\fine_tuned\bmci_client__tinyllama_1_1b_chat_fr"
+base_model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Chargement du modèle sur le périphérique : {device}...")
@@ -32,6 +32,15 @@ model = model.to(device)
 model.eval()
 
 print("Modèle chargé avec succès. Prêt à recevoir des requêtes.")
+
+def clean_response(text: str) -> str:
+    """Nettoie le texte généré par le modèle local pour corriger les inversions de rôle."""
+    # Remplacer les inversions de rôle où l'IA appelle le conseiller "mon client"
+    cleaned = re.sub(r"\bmon client\b", "mon conseiller", text, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bmon cher client\b", "monsieur", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bcher client\b", "monsieur", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bà bientôt, mon client\b", "à bientôt.", cleaned, flags=re.IGNORECASE)
+    return cleaned
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request):
@@ -57,6 +66,7 @@ async def chat_completions(request: Request):
             )
         generated_ids = outputs[0][inputs.input_ids.shape[1]:]
         text = tokenizer.decode(generated_ids, skip_special_tokens=True)
+        cleaned_text = clean_response(text)
         
         return {
             "id": "chatcmpl-local",
@@ -67,32 +77,34 @@ async def chat_completions(request: Request):
                 "index": 0,
                 "message": {
                     "role": "assistant",
-                    "content": text
+                    "content": cleaned_text
                 },
                 "finish_reason": "stop"
             }]
         }
 
     # Mode streaming (Server-Sent Events)
-    streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-    generation_kwargs = dict(
-        input_ids=inputs.input_ids,
-        attention_mask=inputs.attention_mask,
-        max_new_tokens=256,
-        do_sample=True,
-        temperature=temperature,
-        streamer=streamer,
-        pad_token_id=tokenizer.pad_token_id
-    )
-    
-    # Exécuter dans un thread séparé pour ne pas bloquer l'event loop asynchrone
-    thread = Thread(target=model.generate, kwargs=generation_kwargs)
-    thread.start()
+    # Pour pouvoir filtrer le texte de manière fiable (regex sur des expressions complètes),
+    # nous générons d'abord la réponse complète (très rapide sur Qwen 0.5B: ~150-250ms),
+    # nous la nettoyons, puis nous la streamons de manière fluide à LiveKit.
+    with torch.no_grad():
+        outputs = model.generate(
+            input_ids=inputs.input_ids,
+            attention_mask=inputs.attention_mask,
+            max_new_tokens=256,
+            do_sample=True,
+            temperature=temperature,
+            pad_token_id=tokenizer.pad_token_id
+        )
+    generated_ids = outputs[0][inputs.input_ids.shape[1]:]
+    full_text = tokenizer.decode(generated_ids, skip_special_tokens=True)
+    cleaned_text = clean_response(full_text)
     
     async def event_generator():
-        for token in streamer:
-            if not token:
-                continue
+        # Découper par mots pour simuler le streaming de jetons
+        words = cleaned_text.split(" ")
+        for i, word in enumerate(words):
+            token = (" " if i > 0 else "") + word
             chunk = {
                 "id": "chatcmpl-local",
                 "object": "chat.completion.chunk",
@@ -107,7 +119,8 @@ async def chat_completions(request: Request):
                 }]
             }
             yield f"data: {json.dumps(chunk)}\n\n"
-            await asyncio.sleep(0.01)
+            # 20ms par mot pour une sensation de streaming fluide et naturelle
+            await asyncio.sleep(0.02)
             
         # Signal de fin
         final_chunk = {

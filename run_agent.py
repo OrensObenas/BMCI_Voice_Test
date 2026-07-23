@@ -7,7 +7,7 @@ def main():
     # S'assurer que le chemin absolu vers l'interpréteur python du venv est utilisé
     python_exe = sys.executable
     script_path = "agent.py"
-    cmd = [python_exe, script_path, "dev"]
+    cmd = [python_exe, "-u", script_path, "dev"]
     
     print("=" * 60)
     print("Démarrage du boucle de résilience pour l'agent LiveKit...")
@@ -17,8 +17,11 @@ def main():
     
     while True:
         try:
-            # Lancer le worker en tant que sous-processus
-            process = subprocess.Popen(cmd)
+            # Lancer le worker en tant que sous-processus avec redirection de flux pour capture dans les logs
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+            # Lire et afficher les logs du sous-processus en temps réel
+            for line in process.stdout:
+                print(line, end='', flush=True)
             process.wait()
             
             # Vérifier le code de sortie

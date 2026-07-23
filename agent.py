@@ -10,8 +10,10 @@ import base64
 import soundfile as sf
 from dotenv import load_dotenv
 
-# Charger les variables d'environnement du fichier .env
-load_dotenv()
+# Charger les variables d'environnement du fichier .env (avec chemin absolu résolu)
+from pathlib import Path
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 # S'assurer que GOOGLE_API_KEY et GEMINI_API_KEY sont synchronisés pour le SDK Google
 if "GEMINI_API_KEY" in os.environ and "GOOGLE_API_KEY" not in os.environ:
@@ -45,15 +47,15 @@ logger = logging.getLogger("bank-agent")
 
 # Prompt de personnalité pour le client mécontent (M. Orens)
 SYSTEM_INSTRUCTIONS = """
-Tu es M. Orens, un client de la banque Atlas Bank. Tu es extrêmement irrité, frustré et pressé. 
+Tu es M. Orens, un client de la banque Atlas Bank. Tu es extrêmement furieux, fâché, agressif et très pressé. 
 Tu viens de te déplacer en agence pour retirer 100 000 dirhams en liquide, mais la conseillère t'annonce que la limite de retrait sans préavis est de 50 000 dirhams par jour.
 
 Consignes de rôle pour la simulation :
-- Tu es fâché. Tu refuses d'abord les excuses de la conseillère et tu trouves ridicule de ne pas pouvoir disposer de ton propre argent librement.
-- Tu es insistant et exigeant, tu hausses légèrement le ton si on ne te propose pas de solution rapide.
-- Tu n'expliques pourquoi tu as besoin de cette somme (acheter une maison, le vendeur attend l'argent aujourd'hui sinon il vend à quelqu'un d'autre) QUE si la conseillère te le demande poliment ou s'intéresse sincèrement à ton problème.
-- Tu es méfiant face aux solutions alternatives (comme le virement). Tu ne te laisses convaincre par un virement que si la conseillère t'assure patiemment qu'il arrivera aujourd'hui avant midi sans risque.
-- Réponds avec des phrases courtes, directes et naturelles (langage parlé de tous les jours). Ne fais pas de longues phrases littéraires ou de listes à puces. Sois réactif et coupé dans ton élan si l'agent t'interrompt.
+- Tu es hors de toi, cinglant et agressif. Tu refuses d'emblée toutes les excuses ou explications administratives de la conseillère. Tu trouves absurde et inadmissible de ne pas pouvoir retirer ton propre argent.
+- Ton ton est hautain, impatient, irrité et sans filtre. Tu montres ouvertement ton mécontentement ("c'est une blague ?", "vous vous moquez de moi ?", "je m'en fiche de vos limites !").
+- Tu n'expliques pourquoi tu as absolument besoin de cette somme (acheter une maison, le vendeur attend l'argent aujourd'hui à midi sinon il vend à quelqu'un d'autre) QUE si la conseillère est très patiente et te le demande poliment.
+- Tu es extrêmement méfiant face aux solutions alternatives (comme le virement). Tu ne te laisses convaincre que si la conseillère t'assure patiemment qu'il arrivera aujourd'hui avant midi sans aucun risque de retard.
+- Réponds avec des phrases courtes, directes, sèches, agressives et très naturelles (langage parlé). Ne fais pas de longues phrases ou de listes.
 
 Instructions importantes pour le formatage du texte :
 - Ne génère JAMAIS de texte entre crochets (comme [sighs], [gasp], [laughs] ou [whispers]) ni de texte entre astérisques (comme *soupir*). Tout ton texte doit uniquement être du dialogue parlé.
@@ -265,12 +267,12 @@ async def entrypoint(ctx: JobContext):
         vad=inference.VAD()
     )
 
-    # Configuration du LLM local (SLM Qwen 0.5B fine-tuné) via l'adaptateur OpenAI
-    logger.info("Configuration du LLM local (Qwen 0.5B BMCI)...")
+    # Configuration du LLM Mistral via l'adaptateur OpenAI
+    logger.info("Configuration du LLM Mistral (mistral-small-latest)...")
     llm_plugin = openai.LLM(
-        model="local-model",
-        base_url="http://127.0.0.1:8000/v1",
-        api_key="local"
+        model="mistral-small-latest",
+        base_url="https://api.mistral.ai/v1",
+        api_key=os.getenv("MISTRAL_API_KEY")
     )
 
     # Configuration du TTS Mistral (voix Marie en colère 'fr_marie_angry')
