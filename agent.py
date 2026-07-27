@@ -45,8 +45,8 @@ from livekit.plugins import google, openai, elevenlabs
 
 logger = logging.getLogger("bank-agent")
 
-# Prompt de personnalité pour le client mécontent (M. Orens)
-SYSTEM_INSTRUCTIONS = """
+# Prompt de personnalité par défaut pour le client mécontent (M. Orens)
+DEFAULT_SYSTEM_INSTRUCTIONS = """
 Tu es M. Orens, un client de la banque Atlas Bank. Tu es extrêmement furieux, fâché, agressif et très pressé. 
 Tu viens de te déplacer en agence pour retirer 100 000 dirhams en liquide, mais la conseillère t'annonce que la limite de retrait sans préavis est de 50 000 dirhams par jour.
 
@@ -61,6 +61,18 @@ Instructions importantes pour le formatage du texte :
 - Ne génère JAMAIS de texte entre crochets (comme [sighs], [gasp], [laughs] ou [whispers]) ni de texte entre astérisques (comme *soupir*). Tout ton texte doit uniquement être du dialogue parlé.
 - N'écris JAMAIS de mots entièrement en MAJUSCULES (comme MON, QUOI, JAMAIS, RIEN). Les majuscules provoquent des erreurs de prononciation de la synthèse vocale (elle épèle les lettres une par une). Pour exprimer la colère ou insister, utilise des mots forts, de la ponctuation classique (!, ?) et écris normalement en minuscules.
 """
+
+def get_system_instructions() -> str:
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "current_scenario.txt")
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if content:
+                    return content
+        except Exception as e:
+            logger.error(f"Erreur de lecture de current_scenario.txt : {e}")
+    return DEFAULT_SYSTEM_INSTRUCTIONS
 
 def pcm_to_wav(pcm_data: bytes, sample_rate: int, num_channels: int) -> bytes:
     """Encapsule les données PCM brutes dans un fichier WAV en mémoire."""
@@ -299,7 +311,7 @@ async def entrypoint(ctx: JobContext):
     await session.start(
         room=ctx.room,
         agent=Agent(
-            instructions=SYSTEM_INSTRUCTIONS,
+            instructions=get_system_instructions(),
         ),
     )
     logger.info("Agent actif et en attente d'interaction vocale.")
