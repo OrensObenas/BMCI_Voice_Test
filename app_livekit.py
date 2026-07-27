@@ -116,8 +116,14 @@ def start_pipeline():
     python_exe = Path(os.sys.executable)
     script_path = APP_DIR / "run_agent.py"
     
-    # Ouvrir le fichier de log
-    log_f = open(LOG_FILE, "w", encoding="utf-8")
+    # Ouvrir le fichier de log en mode d'écriture sécurisé (tolérance aux verrouillages Windows)
+    try:
+        log_f = open(LOG_FILE, "w", encoding="utf-8")
+    except PermissionError:
+        try:
+            log_f = open(LOG_FILE, "a", encoding="utf-8")
+        except PermissionError:
+            log_f = open(APP_DIR / f"agent_run_{int(time.time())}.log", "w", encoding="utf-8")
     
     # Lancer le processus en arrière-plan
     subprocess.Popen(
