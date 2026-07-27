@@ -141,8 +141,14 @@ class CohereSTT(stt.STT):
         try:
             text = await loop.run_in_executor(None, _transcribe)
         except Exception as e:
-            logger.error(f"Erreur pendant la transcription Cohere : {e}")
-            text = ""
+            logger.warning(f"La transcription Cohere a échoué ({e}), basculement sur OpenAI Whisper STT de secours...")
+            try:
+                openai_stt = openai.STT()
+                openai_event = await openai_stt.recognize(buffer=buffer, language="fr")
+                text = openai_event.alternatives[0].text if openai_event.alternatives else ""
+            except Exception as oai_err:
+                logger.error(f"Erreur également sur le fallback OpenAI STT : {oai_err}")
+                text = ""
         
         return stt.SpeechEvent(
             type=stt.SpeechEventType.FINAL_TRANSCRIPT,
