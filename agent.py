@@ -305,10 +305,6 @@ async def entrypoint(ctx: JobContext):
         tts=tts_plugin,
         turn_handling=TurnHandlingOptions(
             turn_detection=inference.TurnDetector(),
-            endpointing=dict(
-                mode="fixed",
-                min_delay=0.8,
-            )
         ),
     )
 
@@ -322,8 +318,11 @@ async def entrypoint(ctx: JobContext):
     )
     logger.info("Agent actif et en attente d'interaction vocale.")
 
-    # L'agent reste silencieux à la connexion et attend que l'utilisateur commence
-    pass
+    # Salutation initiale par le client mécontent
+    await session.say(
+        "Bonjour. Je suis venu pour retirer cent mille dirhams de mon compte, maintenant.",
+        allow_interruptions=True
+    )
 
 if __name__ == "__main__":
     # Lancement du worker LiveKit CLI
