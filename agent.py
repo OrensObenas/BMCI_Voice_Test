@@ -280,8 +280,8 @@ async def entrypoint(ctx: JobContext):
     # Validation du chargement des clés d'API
     mistral_key = os.getenv("MISTRAL_API_KEY")
     cohere_key = os.getenv("COHERE_API_KEY")
-    logger.info(f"💡 Vérification API : MISTRAL_API_KEY = {'OK (début: ' + mistral_key[:4] + ')' if mistral_key else 'ABSENTE 🔴'}")
-    logger.info(f"💡 Vérification API : COHERE_API_KEY = {'OK (début: ' + cohere_key[:4] + ')' if cohere_key else 'ABSENTE 🔴'}")
+    logger.info(f"[API CHECK] MISTRAL_API_KEY = {'OK (debut: ' + mistral_key[:4] + ')' if mistral_key else 'ABSENTE'}")
+    logger.info(f"[API CHECK] COHERE_API_KEY = {'OK (debut: ' + cohere_key[:4] + ')' if cohere_key else 'ABSENTE'}")
 
     # Configuration du STT Cohere
     logger.info("Configuration du STT Cohere API...")
