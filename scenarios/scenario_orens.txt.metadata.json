@@ -1,4 +1,4 @@
 {
-  "summary":  "Création du fichier scénario Orens pour la méthode de gestion manuelle.",
-  "updatedAt":  "2026-07-27T15:33:05.595017600Z"
+  "summary": "Mise à jour du scénario Orens pour simuler un appel téléphonique, intégrer des détails de compte (Nom, CIN, transaction), insérer des nuances de Darija, gérer l'humeur adaptative et la résolution/rappel.",
+  "updatedAt": "2026-07-29T14:55:17.087863200Z"
 }
