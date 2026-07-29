@@ -16,20 +16,11 @@ Pour aligner la simulation sur les cas réels de formation de la BMCI, les modif
 * **Avant** : Le client donnait toutes ses informations d'emblée.
 * **Maintenant** : Le client (IA) garde le mystère au départ. Il ne dévoile ses informations personnelles de compte (**Nom**, **CIN**, ou **dernières transactions**) **que si le conseiller (l'apprenant) les lui demande explicitement et poliment**.
 
-### 🇲🇦 C. Intégration de Nuances de Darija Marocain
-Pour donner une couleur locale authentique à l'agent vocal sans pour autant perdre la compréhension de la langue de base (français) :
-* L'IA a pour consigne d'intégrer de manière naturelle et fluide des expressions courantes en darija :
-  * **Wakha** (d'accord)
-  * **Safi** (c'est bon / d'accord)
-  * **Chokran a sidi / a lalla** (merci monsieur / madame)
-  * **Blati** (attendez)
-  * **Bzaf** (beaucoup)
-
-### 🎭 D. Humeur Adaptative & Variation du Ton
+### 🎭 C. Humeur Adaptative & Variation du Ton
 * **Humeur dynamique** : Le LLM adapte en temps réel son comportement selon la posture de l'apprenant :
   * **Posture chaleureuse, polie et orientée solution** : Le client baisse le ton, se détend, coopère et remercie l'agent.
   * **Posture froide, administrative ou rigide** : Le client s'énerve davantage, refuse les explications et exige une remontée immédiate.
-* **Résolution/Rappel** : Si l'apprenant propose de remonter le ticket et de rappeler, le client accepte à la seule condition d'obtenir un engagement sur une **heure précise de rappel** (ex: *"D'accord, mais vous me rappelez avant midi, safi ?"*).
+* **Résolution/Rappel** : Si l'apprenant propose de remonter le ticket et de rappeler, le client accepte à la seule condition d'obtenir un engagement sur une **heure précise de rappel** (ex: *"D'accord, mais vous me rappelez avant midi, c'est bien clair ?"*).
 
 ---
 
