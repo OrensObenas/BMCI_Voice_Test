@@ -1,4 +1,4 @@
 {
-  "summary": "Mise à jour du scénario Orens pour simuler un appel téléphonique, intégrer des détails de compte (Nom, CIN, transaction), insérer des nuances de Darija, gérer l'humeur adaptative et la résolution/rappel.",
-  "updatedAt": "2026-07-29T14:55:17.087863200Z"
+  "summary": "Mise à jour du scénario Orens sans les nuances de Darija.",
+  "updatedAt": "2026-07-29T15:03:05.472470100Z"
 }
